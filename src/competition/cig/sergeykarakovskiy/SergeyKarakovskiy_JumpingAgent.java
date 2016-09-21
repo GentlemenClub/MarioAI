@@ -1,9 +1,13 @@
 package competition.cig.sergeykarakovskiy;
 
 import ch.idsia.ai.agents.Agent;
+import ch.idsia.mario.engine.LevelScene;
 import ch.idsia.mario.environments.Environment;
 import ch.idsia.mario.engine.sprites.Mario;
+import ch.idsia.tools.EvaluationInfo;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
+
+import java.util.Arrays;
 
 /**
  * Created by IntelliJ IDEA.
@@ -36,19 +40,9 @@ public class SergeyKarakovskiy_JumpingAgent implements Agent
         //try {Thread.sleep (1000);}
         //catch (Exception e){}
         action[Mario.KEY_SPEED] = action[Mario.KEY_JUMP] =  observation.mayMarioJump() || !observation.isMarioOnGround();
-
-        byte[][] Env= observation.getCompleteObservation();
-        for(int i=0;i<Env.length;i++) {
-            for (int j = 0; j < Env.length; j++)
-            {
-                System.out.print("[");
-                System.out.printf("%3d",(int)Env[i][j]);
-                System.out.print("]");
-            }
-            System.out.println("");
-        }
-        System.out.println("_____________________________________");
-
+        //System.out.println(observation.getMarioFloatPos()[0]);
+        //EvaluationInfo E= new EvaluationInfo();
+        //System.out.println(E.lengthOfLevelPassedCells);
         return action;
     }
 

@@ -3,6 +3,7 @@ package ch.idsia.ai.agents.human;
 import ch.idsia.ai.agents.Agent;
 import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.mario.environments.Environment;
+import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.ScoreEvaluatorAgent;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -50,7 +51,7 @@ public class HumanKeyboardAgent extends KeyAdapter implements Agent
     public void keyPressed (KeyEvent e)
     {
         toggleKey(e.getKeyCode(), true);
-        System.out.println("sdf");
+        //System.out.println("sdf");
     }
 
     public void keyReleased (KeyEvent e)
