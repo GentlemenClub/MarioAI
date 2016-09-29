@@ -18,31 +18,5 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/lib/deeplearning4j" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/lib/deeplearning4j" />
-        </SOURCES>
-        <jarDirectory url="file://$MODULE_DIR$/lib/deeplearning4j" recursive="false" />
-        <jarDirectory url="file://$MODULE_DIR$/lib/deeplearning4j" recursive="false" type="SOURCES" />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/lib/nd4j" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/lib/nd4j" />
-        </SOURCES>
-        <jarDirectory url="file://$MODULE_DIR$/lib/nd4j" recursive="false" />
-        <jarDirectory url="file://$MODULE_DIR$/lib/nd4j" recursive="false" type="SOURCES" />
-      </library>
-    </orderEntry>
   </component>
 </module>

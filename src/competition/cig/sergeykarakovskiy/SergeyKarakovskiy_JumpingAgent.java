@@ -5,8 +5,6 @@ import ch.idsia.mario.engine.LevelScene;
 import ch.idsia.mario.environments.Environment;
 import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.tools.EvaluationInfo;
-import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-
 import java.util.Arrays;
 
 /**

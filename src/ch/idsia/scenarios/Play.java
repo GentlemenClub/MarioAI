@@ -5,6 +5,7 @@ import ch.idsia.ai.agents.AgentsPool;
 import ch.idsia.ai.agents.human.HumanKeyboardAgent;
 import ch.idsia.ai.tasks.ProgressTask;
 import ch.idsia.ai.tasks.Task;
+import ch.idsia.mario.environments.Environment;
 import ch.idsia.tools.CmdLineOptions;
 import ch.idsia.tools.EvaluationOptions;
 import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.ScoreEvaluatorAgent;
@@ -18,9 +19,10 @@ import competition.cig.sergeykarakovskiy.SergeyKarakovskiy_JumpingAgent;
  */
 public class Play {
 
-    public static void main(String[] args) {
-
-     Agent controller = new HumanKeyboardAgent();
+    public static void main(String[] args)
+    {
+      
+     Agent controller = new ScoreEvaluatorAgent();
         if (args.length > 0) {
             controller = AgentsPool.load (args[0]);
             AgentsPool.addAgent(controller);
