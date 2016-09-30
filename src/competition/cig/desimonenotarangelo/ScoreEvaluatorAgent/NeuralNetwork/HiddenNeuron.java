@@ -46,7 +46,7 @@ public class HiddenNeuron extends Neuron
     return 1/(1+Math.exp(-biasedNet));//sigmoid function to output
   }
   
-  protected double delta()
+  protected double delta(double singleTargetOutput)
   {
     double output = getOutput();
     double sum = 0;
@@ -55,7 +55,7 @@ public class HiddenNeuron extends Neuron
     for(Link link: nextNeurons)
     {
       Neuron currNext = link.getOut();
-      sum += currNext.delta() * link.getWeight();
+      sum += currNext.delta(singleTargetOutput) * link.getWeight();
     }
     
     return output*(1-output)*sum;

@@ -11,7 +11,6 @@ public abstract class Neuron
     public abstract void addNext(Neuron next);
     public abstract void linkToNextLayer(Set<? extends Neuron> layer);
     public abstract void linkToPrevLayer(Set<? extends Neuron> layer);
-    protected abstract double delta();
     public abstract Set<Link> getPrevNeurons();
     public abstract Set<Link> getNextNeurons();
 

@@ -25,9 +25,7 @@ public class InputNeuron extends Neuron {
             addNext(neuron);
     }
     public void linkToPrevLayer(Set<? extends Neuron> layer){ throw new UnsupportedOperationException();}
-
-    protected double delta(){ throw new UnsupportedOperationException();}
-
+    
     public Set<Link> getPrevNeurons(){ throw new UnsupportedOperationException();}
     public Set<Link> getNextNeurons() {return nextNeurons;}
 }

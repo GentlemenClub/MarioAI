@@ -6,7 +6,6 @@ import java.util.Set;
 public class OutputNeuron extends Neuron
 {
   protected final Set<Link> prevNeurons;
-  private double targetOutput;
   
   public OutputNeuron() { prevNeurons = new HashSet<Link>(); }
   
@@ -28,13 +27,10 @@ public class OutputNeuron extends Neuron
   
   public void addPrev(Neuron prev) { prevNeurons.add(new Link(prev,this)); }
   
-  public void setTargetOutput(double targetOutput) { this.targetOutput = targetOutput; }
-  public double getTargetOutput () { return targetOutput; }
-  
-  protected double delta()
+  protected double delta(double singleTargetOutput)
   {
     double output = getFinalOutput();
-    return output*(1-output)*(output-targetOutput);
+    return output*(1-output)*(output-singleTargetOutput);
   }
   
   public Set<Link> getPrevNeurons(){ return prevNeurons;}
