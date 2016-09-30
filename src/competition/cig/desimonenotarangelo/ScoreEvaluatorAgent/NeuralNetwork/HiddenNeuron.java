@@ -29,7 +29,17 @@ public class HiddenNeuron extends Neuron
   
   public void addPrev(Neuron prev) { prevNeurons.add(new Link(prev,this)); }
   public void addNext(Neuron next) { nextNeurons.add(new Link(this,next)); }
-  
+
+  public void linkToNextLayer(Set<? extends Neuron> layer) {
+    for (Neuron neuron : layer)
+      addNext(neuron);
+  }
+
+  public void linkToPrevLayer(Set<? extends Neuron> layer) {
+      for (Neuron neuron : layer)
+          addPrev(neuron);
+  }
+
   private double getOutput()
   {
     double biasedNet = currentNet + NeuralNetwork.hiddenBias;

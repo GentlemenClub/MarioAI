@@ -257,15 +257,13 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
   </component>
   <component name="libraryTable">
-    <library name="KotlinJavaRuntime">
+    <library name="com.google.code.gson:gson:2.7" type="repository">
+      <properties maven-id="com.google.code.gson:gson:2.7" />
       <CLASSES>
-        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-runtime.jar!/" />
-        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-reflect.jar!/" />
+        <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.7/gson-2.7.jar!/" />
       </CLASSES>
       <JAVADOC />
-      <SOURCES>
-        <root url="jar://$KOTLIN_BUNDLED$/lib/kotlin-runtime-sources.jar!/" />
-      </SOURCES>
+      <SOURCES />
     </library>
   </component>
 </project>

@@ -12,7 +12,14 @@ public class OutputNeuron extends Neuron
   
   public void forwardPass() { throw new UnsupportedOperationException();}
   public void addNext(Neuron prev){ throw new UnsupportedOperationException();}
-  
+
+  public void linkToNextLayer(Set<? extends Neuron> layer){ throw new UnsupportedOperationException();}
+
+  public void linkToPrevLayer(Set<? extends Neuron> layer) {
+    for (Neuron neuron : layer)
+        addPrev(neuron);
+  }
+
   public double getFinalOutput()
   {
     double biasedNet = currentNet + NeuralNetwork.outputBias;
