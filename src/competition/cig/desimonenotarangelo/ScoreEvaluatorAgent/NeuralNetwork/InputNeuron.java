@@ -6,14 +6,19 @@ import java.util.Set;
 public class InputNeuron extends Neuron {
     protected final Set<Link> nextNeurons;
 
-    public InputNeuron() { nextNeurons = new HashSet<Link>(); }
+    public InputNeuron(double bias)
+    {
+        super(bias);
+        nextNeurons = new HashSet<Link>();
+    }
 
     public void setInput(double singleNet) { currentNet=singleNet; }
 
     public void forwardPass() {
         for(Link link: nextNeurons) {
-            Neuron currNext = link.getOut();
+            Neuron currNext = link.getNext();
             currNext.addNet(currentNet * link.getWeight());
+            int i =0;
         }
     }
 
@@ -25,6 +30,8 @@ public class InputNeuron extends Neuron {
             addNext(neuron);
     }
     public void linkToPrevLayer(Set<? extends Neuron> layer){ throw new UnsupportedOperationException();}
+    
+    public double getDelta(){ throw new UnsupportedOperationException();}
     
     public Set<Link> getPrevNeurons(){ throw new UnsupportedOperationException();}
     public Set<Link> getNextNeurons() {return nextNeurons;}

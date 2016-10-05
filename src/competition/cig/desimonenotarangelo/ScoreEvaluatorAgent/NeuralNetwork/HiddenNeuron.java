@@ -10,19 +10,19 @@ public class HiddenNeuron extends Neuron
   protected final Set<Link> nextNeurons;
   protected final Set<Link> prevNeurons;
   
-  public HiddenNeuron()
+  public HiddenNeuron(double bias)
   {
+    super(bias);
     nextNeurons = new HashSet<Link>();
     prevNeurons = new HashSet<Link>();
   }
   
   public void forwardPass()
   {
-    double output= getOutput();
-    
+    computeOutput();
     for(Link link: nextNeurons)
     {
-      Neuron currNext = link.getOut();
+      Neuron currNext = link.getNext();
       currNext.addNet(output * link.getWeight());
     }
   }
@@ -39,14 +39,8 @@ public class HiddenNeuron extends Neuron
       for (Neuron neuron : layer)
           addPrev(neuron);
   }
-
-  private double getOutput()
-  {
-    double biasedNet = currentNet + NeuralNetwork.hiddenBias;
-    return 1/(1+Math.exp(-biasedNet));//sigmoid function to output
-  }
   
-  protected double delta(double singleTargetOutput)
+  protected void computeDelta()
   {
     double output = getOutput();
     double sum = 0;
@@ -54,12 +48,14 @@ public class HiddenNeuron extends Neuron
     //for is for future implementations: now only one output node is supported
     for(Link link: nextNeurons)
     {
-      Neuron currNext = link.getOut();
-      sum += currNext.delta(singleTargetOutput) * link.getWeight();
+      Neuron currNext = link.getNext();
+      sum += currNext.getDelta() * link.getWeight();
     }
     
-    return output*(1-output)*sum;
+    delta = output*(1-output)*sum;
   }
+  
+  protected double getDelta() { return delta; }
   
   public Set<Link> getPrevNeurons(){ return prevNeurons;}
   public Set<Link> getNextNeurons(){ return nextNeurons;}

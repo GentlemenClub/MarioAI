@@ -4,12 +4,8 @@ package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
 //Main Neural Network class: it takes the byte[][] environment of the game as input
 //and outputs the predicted delta score for one action
 
-import com.sun.xml.internal.bind.v2.runtime.IllegalAnnotationException;
-
 import java.io.File;
 import java.util.*;
-
-import static com.sun.org.apache.xml.internal.security.keys.keyresolver.KeyResolver.iterator;
 
 public class NeuralNetwork {
     public static final double hiddenBias = 0.35,
@@ -38,13 +34,13 @@ public class NeuralNetwork {
     private void createInputLayer(int inputLayerDim) {
         inputLayer = new LinkedHashSet<InputNeuron>(inputLayerDim);
         for (int i = 0; i < inputLayerDim; i++)
-            inputLayer.add(new InputNeuron());
+            inputLayer.add(new InputNeuron(1));
     }
 
     private void createHiddenLayer(int hiddenLayerDim) {
         hiddenLayer = new LinkedHashSet<HiddenNeuron>(hiddenLayerDim);
         for (int i = 0; i < hiddenLayerDim; i++) {
-            HiddenNeuron hiddenNeuron = new HiddenNeuron();
+            HiddenNeuron hiddenNeuron = new HiddenNeuron(hiddenBias);
             hiddenNeuron.linkToPrevLayer(inputLayer);
             hiddenLayer.add(hiddenNeuron);
         }
@@ -57,7 +53,7 @@ public class NeuralNetwork {
     private void createOutputLayer(int outputLayerDim) {
         outputLayer = new LinkedHashSet<OutputNeuron>(outputLayerDim);
         for (int i = 0; i < outputLayerDim; i++) {
-            OutputNeuron outputNeuron = new OutputNeuron();
+            OutputNeuron outputNeuron = new OutputNeuron(outputBias);
             outputNeuron.linkToPrevLayer(hiddenLayer);
             outputLayer.add(outputNeuron);
         }
@@ -72,30 +68,36 @@ public class NeuralNetwork {
     private void loadNeuralNetwork(File file) {
 
     }
-
-    public void saveHiddenLayerDeltaWeights(Map<Link, Double> deltaWeights,
-                                 Set<? extends Neuron> layer,
-                                 Map<Neuron,Double> targetOutput ) {
+    
+    public void saveOutputLayerDeltaWeights(Map<Link, Double> deltaWeights, Map<OutputNeuron,Double> targetOutput ) {
         
-        //Calculates deltaWeigths for each node in the layer
-        for (Neuron n : layer) {
+        //Calculates deltaWeigths for each node in the output layer
+        for (OutputNeuron n : outputLayer) {
             double singleTargetOutput = targetOutput.get(n);
-            double deltaWeight = (-eta) * n.delta(singleTargetOutput) * n.getCurrentNet();
+            n.computeDelta(singleTargetOutput);
+            
             for (Link l : n.getPrevNeurons())
+            {
+                Neuron prev = l.getPrev();
+                double deltaWeight = (-eta) * n.getDelta() * prev.getOutput();
                 deltaWeights.put(l, deltaWeight);
+            }
         }
     }
     
-    public void saveOutputLayerDeltaWeights(Map<Link, Double> deltaWeights,
-                                 Set<? extends Neuron> layer,
-                                 Map<Neuron,Double> targetOutput ) {
+    public void saveHiddenLayerDeltaWeights(Map<Link, Double> deltaWeights, Set<HiddenNeuron> layer) {
         
-        //Calculates deltaWeigths for each node in the layer
-        for (Neuron n : layer) {
-            double singleTargetOutput = targetOutput.get(n);
-            double deltaWeight = (-eta) * n.delta(singleTargetOutput) * n.getCurrentNet();
+        //Calculates deltaWeigths for each node in the hidden layer
+        for (HiddenNeuron n : hiddenLayer) {
+            
+            n.computeDelta();
+            
             for (Link l : n.getPrevNeurons())
+            {
+                Neuron prev = l.getPrev();
+                double deltaWeight = (-eta) * n.getDelta() * prev.getOutput();
                 deltaWeights.put(l, deltaWeight);
+            }
         }
     }
     
@@ -111,30 +113,27 @@ public class NeuralNetwork {
             n.resetNet();
     }
     
-    public void backPropagation(Map<Neuron,Double> targetOutput) {
+    public void backPropagation(Map<OutputNeuron,Double> targetOutput) {
         
         //TODO: Bias update to be implemented
         
         Map<Link, Double> deltaWeights = new HashMap<Link, Double>();
-
-        saveDeltaWeights(deltaWeights, outputLayer, targetOutput);
-        saveDeltaWeights(deltaWeights, hiddenLayer, targetOutput);
+    
+        saveOutputLayerDeltaWeights(deltaWeights, targetOutput);
+        saveHiddenLayerDeltaWeights(deltaWeights, hiddenLayer);
 
         for (Link l : deltaWeights.keySet())
             l.updateWeight(deltaWeights.get(l));
     }
 
-    public Map<Neuron,Double> forwardPropagation(NeuralNetworkInput input) {
+    public Map<OutputNeuron,Double> forwardPropagation(NeuralNetworkInput input) {
     
         Iterator inputLayerIterator = inputLayer.iterator();
-        Map<Neuron,Double> outputs = new HashMap<Neuron,Double>(outputLayer.size());
+        Map<OutputNeuron,Double> outputs = new HashMap<OutputNeuron,Double>(outputLayer.size());
         
         if(inputLayer.size()!= input.size())
           throw new IllegalArgumentException("Input layer's size does not match given input");
         
-        //Sets input environment into the input layer
-        //for(int i=0;i <input.size(); i++)
-        //    for(int j=0;j <input.size(); j++) {
         List<Byte> inputList = input.getInputList();
         for(Byte d: inputList)
         {
@@ -146,9 +145,11 @@ public class NeuralNetwork {
         forwardLayerPass(inputLayer);
         //Forward pass in the hidden layer
         forwardLayerPass(hiddenLayer);
+        //Forward pass in the output layer
+        forwardLayerPass(outputLayer);
         
         for (OutputNeuron outputNeuron : outputLayer)
-            outputs.put(outputNeuron,outputNeuron.getFinalOutput());
+            outputs.put(outputNeuron,outputNeuron.getOutput());
         
         return outputs;
     }
@@ -161,11 +162,11 @@ public class NeuralNetwork {
         resetLayer(outputLayer);
     }
     
-    public static class SumNNInput implements NeuralNetworkInput
+    public static class SimpleNNInput implements NeuralNetworkInput
     {
         private final List<Byte> l;
                 
-        public SumNNInput(List<Byte> l)
+        public SimpleNNInput(List<Byte> l)
         {
             this.l=l;
         }
@@ -181,30 +182,58 @@ public class NeuralNetwork {
         }
     }
     
+    public static int AND (byte a, byte b)
+    {
+        if(a==1 && b ==1)
+            return 1;
+        else
+            return 0;
+    }
+    
+    public static byte getOneOrZero()
+    {
+        double seed =Math.random();
+        
+        if(seed<=0.5)
+            return 1;
+        else
+            return 0;
+    }
+    
+    
     public static void main (String... args) {
         
         NeuralNetwork neuralNetwork = new NeuralNetwork(2, 4);
-        Neuron outputNeuron=null;
+        OutputNeuron outputNeuron=null;
         
         for(OutputNeuron n:neuralNetwork.outputLayer)
             outputNeuron=n;
         
-        for(int i=0; i<10000; i++)
+        for(int i=0; i<10000000; i++)
         {
-            byte a=(byte)(Math.random()*10),b =(byte)(Math.random()*10);
+            byte a = getOneOrZero();
+            byte b = getOneOrZero();
+            
+            //byte a=(byte)(Math.random()*10),b =(byte)(Math.random()*10);
+            //byte a=2;
             
             List<Byte> l= Arrays.asList(a,b);
-            SumNNInput in = new SumNNInput(l);
-            Map <Neuron, Double> out = neuralNetwork.forwardPropagation(in);
+            SimpleNNInput in = new SimpleNNInput(l);
+            Map <OutputNeuron, Double> out = neuralNetwork.forwardPropagation(in);
             
-            Map<Neuron,Double> targetOutputs = new HashMap <Neuron, Double>();
+            Map<OutputNeuron,Double> targetOutputs = new HashMap <OutputNeuron, Double>();
             
-            targetOutputs.put(outputNeuron,(double)a+b);
+            //targetOutputs.put(outputNeuron,(double)a+b);
+            targetOutputs.put(outputNeuron,(double)(AND(a,b)));
+            
             neuralNetwork.backPropagation(targetOutputs);
-            
+    
             for(Neuron n: out.keySet())
+              System.out.println(a+" AND "+ b+ " = "+out.get(n));
+            
+           /* for(Neuron n: out.keySet())
                 System.out.println(a+" + "+ b+ " = "+out.get(n));
+                */
         }
     }
-
 }

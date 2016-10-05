@@ -7,9 +7,14 @@ public class OutputNeuron extends Neuron
 {
   protected final Set<Link> prevNeurons;
   
-  public OutputNeuron() { prevNeurons = new HashSet<Link>(); }
+  public OutputNeuron(double bias)
+  {
+    super(bias);
+    prevNeurons = new HashSet<Link>();
+  }
   
-  public void forwardPass() { throw new UnsupportedOperationException();}
+  public void forwardPass() { computeOutput(); }
+  
   public void addNext(Neuron prev){ throw new UnsupportedOperationException();}
 
   public void linkToNextLayer(Set<? extends Neuron> layer){ throw new UnsupportedOperationException();}
@@ -19,19 +24,11 @@ public class OutputNeuron extends Neuron
         addPrev(neuron);
   }
 
-  public double getFinalOutput()
-  {
-    double biasedNet = currentNet + NeuralNetwork.outputBias;
-    return 1/(1+Math.exp(-biasedNet));//sigmoid function to output
-  }
-  
   public void addPrev(Neuron prev) { prevNeurons.add(new Link(prev,this)); }
   
-  protected double delta(double singleTargetOutput)
-  {
-    double output = getFinalOutput();
-    return output*(1-output)*(output-singleTargetOutput);
-  }
+  protected void computeDelta(double singleTargetOutput) { delta = output*(1-output)*(output-singleTargetOutput); }
+  
+  protected double getDelta() { return delta; }
   
   public Set<Link> getPrevNeurons(){ return prevNeurons;}
   public Set<Link> getNextNeurons() { throw new UnsupportedOperationException();}
