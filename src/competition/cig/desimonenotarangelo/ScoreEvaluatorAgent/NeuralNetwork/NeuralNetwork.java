@@ -10,11 +10,11 @@ import java.util.*;
 public class NeuralNetwork {
     public static final double hiddenBias = 0.35,
             outputBias = 0.60,
-            eta = 0.0002;
+            eta = 0.02;
 
     private Set<InputNeuron> inputLayer;
     private Set<HiddenNeuron> hiddenLayer;
-    private Set<OutputNeuron> outputLayer;
+    public Set<OutputNeuron> outputLayer;
 
     public NeuralNetwork(int inputLayerDim, int hiddenLayerDim) {
         //forcing only one output
@@ -208,10 +208,9 @@ public class NeuralNetwork {
             return 0;
     }
     
-    
     public static void main (String... args) {
         
-        NeuralNetwork neuralNetwork = new NeuralNetwork(2, 10);
+        NeuralNetwork neuralNetwork = new NeuralNetwork(2,8);
         OutputNeuron outputNeuron=null;
         
         for(OutputNeuron n:neuralNetwork.outputLayer)
@@ -219,10 +218,10 @@ public class NeuralNetwork {
         
         for(int i=0; i<10000000; i++)
         {
-            //byte a = getOneOrZero();
-            //byte b = getOneOrZero();
+            byte a = getOneOrZero();
+            byte b = getOneOrZero();
             
-           byte a=(byte)(Math.random()*10),b =(byte)(Math.random()*10);
+            //byte a=(byte)(Math.random()*10),b =(byte)(Math.random()*10);
             //byte a=100,b=10;
             
             List<Byte> l= Arrays.asList(a,b);
@@ -231,22 +230,22 @@ public class NeuralNetwork {
             
             Map<OutputNeuron,Double> targetOutputs = new HashMap <OutputNeuron, Double>();
             
-            targetOutputs.put(outputNeuron,(double)a+b);
+            
+            //targetOutputs.put(outputNeuron,(double)a+b);
             //targetOutputs.put(outputNeuron,(double)(AND(a,b)));
-            //targetOutputs.put(outputNeuron,(double)(XOR(a,b)));
+            targetOutputs.put(outputNeuron,(double)(XOR(a,b)));
     
             neuralNetwork.backPropagation(targetOutputs);
     
             /*for(Neuron n: out.keySet())
               System.out.println(a+" AND "+ b+ " = "+out.get(n));
             */
-            //for(Neuron n: out.keySet())
-            //    System.out.println(a+" XOR "+ b+ " = "+out.get(n));
-            
             for(Neuron n: out.keySet())
-                System.out.println(a+" + "+ b+ " = "+out.get(n));
+                System.out.println(a+" XOR "+ b+ " = "+out.get(n));
+            
+            /*for(Neuron n: out.keySet())
+                System.out.println(a+" + "+ b+ " = "+out.get(n));*/
             neuralNetwork.resetNetwork();
-            int ba=4;
         }
     }
 }

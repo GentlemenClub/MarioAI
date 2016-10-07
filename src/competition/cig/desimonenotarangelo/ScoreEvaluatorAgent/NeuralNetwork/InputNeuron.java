@@ -18,7 +18,7 @@ public class InputNeuron extends Neuron {
         for(Link link: nextNeurons) {
             Neuron currNext = link.getNext();
             currNext.addNet(currentNet * link.getWeight());
-            int i =0;
+            int i = 0;
         }
     }
 
