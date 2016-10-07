@@ -44,6 +44,19 @@ public class HiddenNeuron extends Neuron
   {
     double output = getOutput();
     double sum = 0;
+  
+    //for is for future implementations: now only one output node is supported
+    for(Link link: nextNeurons)
+    {
+      Neuron currNext = link.getNext();
+      sum += currNext.getDelta() * link.getWeight();
+    }
+    delta = ((currentNet/ (2*Math.sqrt(currentNet*currentNet+1)))+1) * sum;//Bent Identity
+    
+    /*
+    OLD SIGMOID
+    double output = getOutput();
+    double sum = 0;
     
     //for is for future implementations: now only one output node is supported
     for(Link link: nextNeurons)
@@ -52,7 +65,7 @@ public class HiddenNeuron extends Neuron
       sum += currNext.getDelta() * link.getWeight();
     }
     
-    delta = output*(1-output)*sum;
+    delta = output*(1-output)*sum;*/
   }
   
   protected double getDelta() { return delta; }

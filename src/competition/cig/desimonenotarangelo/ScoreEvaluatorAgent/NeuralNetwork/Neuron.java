@@ -41,8 +41,16 @@ public abstract class Neuron
     protected void computeOutput()
     {
         double biasedNet = currentNet + bias;
-        currentNet=0;
-        output = 1/(1+Math.exp(-biasedNet));//sigmoid function to output
+        //currentNet=0;
+        /*if( this instanceof OutputNeuron)
+        {
+            output = biasedNet; //Linear Function needed
+            int a=2;
+        }
+        else*/
+        output = (Math.sqrt(biasedNet*biasedNet +1)-1)*0.5 + biasedNet;//Bent Identity
+        //output = biasedNet*biasedNet*biasedNet;//x^3 as activation function
+        //OLD SIGMOID output = 1/(1+Math.exp(-biasedNet)); sigmoid function to output
     }
     
     public boolean equals(Object o)

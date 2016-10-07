@@ -26,7 +26,11 @@ public class OutputNeuron extends Neuron
 
   public void addPrev(Neuron prev) { prevNeurons.add(new Link(prev,this)); }
   
-  protected void computeDelta(double singleTargetOutput) { delta = output*(1-output)*(output-singleTargetOutput); }
+  protected void computeDelta(double singleTargetOutput)
+  {
+    delta = (output-singleTargetOutput) * ((currentNet/ (2*Math.sqrt(currentNet*currentNet+1)))+1);//Bent Identity
+    //OLD SIGMOID output*(1-output)*(output-singleTargetOutput);
+  }
   
   protected double getDelta() { return delta; }
   
