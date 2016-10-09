@@ -1,10 +1,11 @@
 package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-public abstract class Neuron
+public abstract class Neuron implements Serializable
 {
     protected double currentNet;
     protected double delta;

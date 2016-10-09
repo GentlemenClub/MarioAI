@@ -32,7 +32,7 @@ public class Art
     public static Image logo;
     public static Image titleScreen;
     final static String curDir = System.getProperty("user.dir");
-    final static String img = curDir + "/../img/";
+    final static String img = curDir + "/img/";
 
     public static void init(GraphicsConfiguration gc)
     {
@@ -71,7 +71,7 @@ public class Art
             // System.out.println("source: " + source);
         }
         catch (Exception e) {
-            e.printStackTrace ();
+            //System.out.println("Can't read " + imageName + " from the assets");
         }
 
         if (source == null) {
@@ -79,7 +79,11 @@ public class Art
             imageName = img + imageName;
             File file = new File(imageName);
             // System.out.println("File: " + file + ", exists " + file.exists() + ", length " + file.length ());
-            source = ImageIO.read(file);
+            try {
+                source = ImageIO.read(file);
+            } catch (IOException e) {
+                System.out.println("Can't read " + imageName + " from the original source");
+            }
             // System.out.println("source: " + source);
         }
         if (source == null) { // still!!

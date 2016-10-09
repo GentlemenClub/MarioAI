@@ -1,17 +1,18 @@
 package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
 
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Link {
+public class Link implements Serializable {
     private final Neuron prev, next;
     public static final Map<Link, Double> weights = new HashMap<Link, Double>();
 
     public Link(Neuron in, Neuron out) {
         this.prev = in;
         this.next = out;
-        if (!weights.containsKey(this))//Not really necessary
+        if (!weights.containsKey(this))//if the key exists, don't overwrite the value
             weights.put(this, Math.random());
     }
 

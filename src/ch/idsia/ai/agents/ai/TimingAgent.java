@@ -49,4 +49,8 @@ public class TimingAgent implements Agent {
         evaluations = 0;
         return average;
     }
+
+    public Agent getWrappedAgent() {
+        return this.agent;
+    }
 }

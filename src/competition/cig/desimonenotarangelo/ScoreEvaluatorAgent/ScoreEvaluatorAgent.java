@@ -9,6 +9,8 @@ import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork.Neu
 import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork.OutputNeuron;
 
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 
 import static competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.ScoreEvaluatorAgent.ACTION.*;
@@ -16,12 +18,12 @@ import static java.lang.Thread.sleep;
 
 
 public class ScoreEvaluatorAgent implements Agent {
-    
     public enum ACTION {
         LEFT, RIGHT, JUMP, SPEED,
         LEFT_JUMP, RIGHT_JUMP, SPEED_JUMP, RIGHT_SPEED, LEFT_SPEED
     }
-    
+    private String name;
+
     private final boolean[] action;
     private String lastAction = null;
     private double lastScore = 0;
@@ -30,13 +32,26 @@ public class ScoreEvaluatorAgent implements Agent {
     private int inputLayerDim  = 81;
     private int hiddenLayerDim = 20;
     
-    
     public ScoreEvaluatorAgent() {
         action = new boolean[Environment.numberOfButtons];
         actionEvaluators = new HashMap<String,NeuralNetwork>();
         
-        for (ACTION a: ACTION.values())
-            actionEvaluators.put(a.toString(), new NeuralNetwork(inputLayerDim,hiddenLayerDim));
+        for (ACTION a: ACTION.values()) {
+            String action = a.toString();
+            try {
+                actionEvaluators.put(action, new NeuralNetwork(action + ".ai"));
+            } catch (IOException | ClassNotFoundException e) {
+                actionEvaluators.put(action, new NeuralNetwork(inputLayerDim,hiddenLayerDim));
+            }
+        }
+        this.name = getClass().getName();
+    }
+
+    public void saveAI() {
+        for (String action : actionEvaluators.keySet()) {
+            NeuralNetwork neuralNetwork = actionEvaluators.get(action);
+            neuralNetwork.saveNeuralNetwork(action + ".ai");
+        }
     }
     
     void setAction(ACTION ChosenAction) {
@@ -103,8 +118,8 @@ public class ScoreEvaluatorAgent implements Agent {
 
     //gets submatrix 9x9
     public static byte[][] getSubObservation(Environment Observation) {
-        byte[][] CompleteObservation = Observation.getCompleteObservation();
-        byte[][] SubObservation = new byte[9][9];
+        byte[][] completeObservation = Observation.getCompleteObservation();
+        byte[][] subObservation = new byte[9][9];
         int k = 0, z = 0;
   
       /*for (int i = 0; i < 22; i++)
@@ -113,14 +128,14 @@ public class ScoreEvaluatorAgent implements Agent {
       */
         for (int i = 7; i < 16; i++)
             for (int j = 7; j < 16; j++) {
-                SubObservation[z][k] = CompleteObservation[i][j];
+                subObservation[z][k] = completeObservation[i][j];
                 k++;
                 if (k == 9) {
                     k = 0;
                     z++;
                 }
             }
-        return SubObservation;
+        return subObservation;
     }
 
     public void reset() {
@@ -128,7 +143,7 @@ public class ScoreEvaluatorAgent implements Agent {
 
     private OutputNeuron getOutputNeuron(NeuralNetwork network)
     {
-        for(OutputNeuron n : network.outputLayer)
+        for(OutputNeuron n : network.getOutputLayer())
           return n;
         
         return null;
@@ -215,13 +230,12 @@ public class ScoreEvaluatorAgent implements Agent {
     }
 
     public String getName() {
-        return null;
+        return name;
     }
 
     public void setName(String name) {
-
+        this.name = name;
     }
-    
 }
     /*
       

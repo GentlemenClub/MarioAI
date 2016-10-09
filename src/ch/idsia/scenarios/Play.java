@@ -21,7 +21,7 @@ public class Play {
 
     public static void main(String[] args)
     {
-      
+
      Agent controller = new ScoreEvaluatorAgent();
         if (args.length > 0) {
             controller = AgentsPool.load (args[0]);
@@ -39,5 +39,6 @@ public class Play {
         task.setOptions(options);
 
         System.out.println ("Score: " + task.evaluate (controller)[0]);
+        ((ScoreEvaluatorAgent) controller).saveAI();
     }
 }
