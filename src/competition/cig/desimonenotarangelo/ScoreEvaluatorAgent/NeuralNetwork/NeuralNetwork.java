@@ -12,12 +12,12 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 public class NeuralNetwork implements Serializable {
-    public static final double hiddenBias = 0.35,
+    public static double hiddenBias = 0.35,
             outputBias = 0.60,
             eta = 0.0002;
     
     private Set<InputNeuron> inputLayer;
-    private Set<HiddenNeuron> hiddenLayer;
+    private List<Set<HiddenNeuron>> hiddenLayers;
     private Set<OutputNeuron> outputLayer;
     
     //Structures used for caching values during forward and backward propagation
