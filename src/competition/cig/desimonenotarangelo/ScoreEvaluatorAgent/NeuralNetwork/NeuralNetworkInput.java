@@ -4,6 +4,6 @@ import java.util.List;
 
 public interface NeuralNetworkInput
 {
-  public List<Byte> getInputList();
+  public List<Double> getInputList();
   public int size();
 }

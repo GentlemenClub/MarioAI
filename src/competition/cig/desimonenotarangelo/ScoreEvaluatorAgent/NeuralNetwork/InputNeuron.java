@@ -1,6 +1,8 @@
 package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class InputNeuron extends Neuron {
@@ -11,14 +13,19 @@ public class InputNeuron extends Neuron {
         super(bias);
         nextNeurons = new HashSet<Link>();
     }
-
-    public void setInput(double singleNet) { currentNet=singleNet; }
-
-    public void forwardPass() {
+    
+    public void forwardPass()
+    {
+        Map<Neuron,Double> nets = NeuralNetwork.netsCache;
         for(Link link: nextNeurons) {
             Neuron currNext = link.getNext();
-            currNext.addNet(currentNet * link.getWeight());
-            int i = 0;
+            double singleNet = nets.get(this);
+            Double nextNet = nets.get(currNext);
+            //If it is the first time you add net to the neuron, the net must be initialized to 0
+            if(nextNet==null)
+                nextNet=0.0;
+            
+            nets.put(currNext, nextNet + singleNet * link.getWeight());
         }
     }
 

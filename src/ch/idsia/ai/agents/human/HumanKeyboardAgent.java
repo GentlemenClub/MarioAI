@@ -1,6 +1,7 @@
 package ch.idsia.ai.agents.human;
 
 import ch.idsia.ai.agents.Agent;
+import ch.idsia.mario.engine.LevelScene;
 import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.mario.environments.Environment;
 import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.ScoreEvaluatorAgent;
@@ -38,6 +39,12 @@ public class HumanKeyboardAgent extends KeyAdapter implements Agent
     public boolean[] getAction(Environment observation)
     {
         float[] enemiesPos = observation.getEnemiesFloatPos();
+      /*for (int i = 0; i < 22; i++)
+      {
+          for (int j = 0; j < 22; j++)
+              System.out.printf("[ %3d ]", observation.getCompleteObservation()[i][j]);
+          System.out.println();
+      }*/
         return Action;
     }
 

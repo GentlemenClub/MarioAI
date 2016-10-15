@@ -8,7 +8,7 @@ import java.util.Map;
 public class Link implements Serializable {
     private final Neuron prev, next;
     public static final Map<Link, Double> weights = new HashMap<Link, Double>();
-
+    
     public Link(Neuron in, Neuron out) {
         this.prev = in;
         this.next = out;

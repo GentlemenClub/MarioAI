@@ -35,7 +35,7 @@ public class LevelScene extends Scene implements SpriteContext
 
     public boolean paused = false;
     public int startTime = 0;
-    public int timeLeft;
+    public static int timeLeft;
 
     public int getTotalTime() {  return totalTime; }
 

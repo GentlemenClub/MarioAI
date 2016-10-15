@@ -2,14 +2,12 @@ package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
 public abstract class Neuron implements Serializable
 {
-    protected double currentNet;
-    protected double delta;
-    protected double output;
     protected double bias;
     private final String id;
     
@@ -20,13 +18,6 @@ public abstract class Neuron implements Serializable
     public abstract void linkToPrevLayer(Set<? extends Neuron> layer);
     public abstract Set<Link> getPrevNeurons();
     public abstract Set<Link> getNextNeurons();
-    protected abstract double getDelta();
-    
-    public Neuron(double bias, String id)
-    {
-        this.bias = bias;
-        this.id=id;
-    }
     
     public Neuron(double bias)
     {
@@ -34,15 +25,14 @@ public abstract class Neuron implements Serializable
         this.id = UUID.randomUUID().toString();
     }
     
-    public void addNet(double singleNet ) { currentNet+=singleNet; }
-    public void resetNet(){ currentNet=0; }
-    protected double getCurrentNet(){ return currentNet; }
-    protected double getOutput(){ return output; }
+    //public void addNet(double singleNet ) { currentNet+=singleNet; }
+    //public void resetNet(){ currentNet=0; }
+    //protected double getCurrentNet(){ return currentNet; }
     
-    protected void computeOutput()
+    protected double computeOutput(double currentNet)
     {
         double biasedNet = currentNet + bias;
-        output = (Math.sqrt(biasedNet*biasedNet +1)-1)*0.5 + biasedNet;//Bent Identity
+        return (Math.sqrt(biasedNet*biasedNet +1)-1)*0.5 + biasedNet;//Bent Identity
         //OLD SIGMOID output = 1/(1+Math.exp(-biasedNet)); sigmoid function to output
     }
     

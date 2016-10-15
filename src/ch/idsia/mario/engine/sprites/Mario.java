@@ -40,7 +40,7 @@ public class Mario extends Sprite
         large = (mode == MODE.MODE_LARGE);
         fire = (mode == MODE.MODE_FIRE);
     }
-
+    
     public int getMode()
     {
         return ((large) ? 1 : 0) + ((fire) ? 1 : 0);

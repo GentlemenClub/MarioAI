@@ -1,6 +1,7 @@
 package ch.idsia.mario.simulation;
 
 import ch.idsia.ai.agents.Agent;
+import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.utils.ParameterContainer;
 
 /**

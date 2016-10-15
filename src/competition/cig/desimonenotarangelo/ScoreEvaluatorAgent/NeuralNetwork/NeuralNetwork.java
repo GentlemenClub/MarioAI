@@ -15,11 +15,17 @@ public class NeuralNetwork implements Serializable {
     public static final double hiddenBias = 0.35,
             outputBias = 0.60,
             eta = 0.0002;
-
+    
     private Set<InputNeuron> inputLayer;
     private Set<HiddenNeuron> hiddenLayer;
     private Set<OutputNeuron> outputLayer;
-
+    
+    //Structures used for caching values during forward and backward propagation
+    protected static final Map<Neuron,Double> deltasCache = new HashMap<Neuron,Double>();
+    protected static final Map<Neuron,Double> netsCache = new HashMap<Neuron,Double>();
+    protected static final Map<Neuron,Double> finalOutputsCache = new HashMap<Neuron,Double>();
+    protected static final Map<Link,Double> deltaWeightsCache = new HashMap<Link,Double>();
+    
     public NeuralNetwork(int inputLayerDim, int hiddenLayerDim) {
         //forcing only one output
         this(inputLayerDim, hiddenLayerDim, 1);
@@ -142,69 +148,85 @@ public class NeuralNetwork implements Serializable {
         System.out.println("Neural network loaded from " + fileName);
     }
 
-    public void saveOutputLayerDeltaWeights(Map<Link, Double> deltaWeights, Map<OutputNeuron, Double> targetOutput) {
+    public void saveOutputLayerDeltaWeights(Map<OutputNeuron, Double> targetOutput) {
 
         //Calculates deltaWeigths for each node in the output layer
         for (OutputNeuron n : outputLayer) {
             double singleTargetOutput = targetOutput.get(n);
-            n.computeDelta(singleTargetOutput);
-
+            double singleDelta = n.computeDelta(singleTargetOutput);
+            deltasCache.put(n,singleDelta);
+            
             for (Link l : n.getPrevNeurons()) {
                 Neuron prev = l.getPrev();
-                double deltaWeight = (-eta) * n.getDelta() * prev.getOutput();
-                deltaWeights.put(l, deltaWeight);
+                double deltaWeight = (-eta) * singleDelta * prev.computeOutput(netsCache.get(prev));
+                deltaWeightsCache.put(l, deltaWeight);
             }
         }
     }
 
-    public void saveHiddenLayerDeltaWeights(Map<Link, Double> deltaWeights, Set<HiddenNeuron> layer) {
+    public void saveHiddenLayerDeltaWeights(Set<HiddenNeuron> currHiddenLayer) {
 
         //Calculates deltaWeigths for each node in the hidden layer
-        for (HiddenNeuron n : hiddenLayer) {
-            n.computeDelta();
-
+        for (HiddenNeuron n : currHiddenLayer) {
+            deltasCache.put(n,n.computeDelta());
             for (Link l : n.getPrevNeurons()) {
                 Neuron prev = l.getPrev();
-                double deltaWeight = (-eta) * n.getDelta() * prev.getOutput();
-                deltaWeights.put(l, deltaWeight);
+                double deltaWeight = (-eta) * deltasCache.get(n) * prev.computeOutput(netsCache.get(prev));
+                deltaWeightsCache.put(l, deltaWeight);
             }
         }
     }
 
     private void forwardLayerPass(Set<? extends Neuron> layer) {
         for (Neuron n : layer)
-            n.forwardPass();
+          n.forwardPass();
     }
-
-    private void resetLayer(Set<? extends Neuron> layer) {
-        for (Neuron n : layer)
-            n.resetNet();
-    }
-
-    public void backPropagation(Map<OutputNeuron, Double> targetOutput) {
+    
+    public void backPropagation(NeuralNetworkOutput nnOutput, Map<OutputNeuron,Double> targetOutput) {
 
         //TODO: Bias update to be implemented
-
-        Map<Link, Double> deltaWeights = new HashMap<Link, Double>();
-
-        saveOutputLayerDeltaWeights(deltaWeights, targetOutput);
-        saveHiddenLayerDeltaWeights(deltaWeights, hiddenLayer);
-
-        for (Link l : deltaWeights.keySet())
-            l.updateWeight(deltaWeights.get(l));
+        
+        //Copies Values from input into the cache
+        finalOutputsCache.putAll(nnOutput.getFinalOutputs());
+        netsCache.putAll(nnOutput.getNets());
+        
+        /*for(OutputNeuron n : targetOutput.keySet())
+            System.out.println("Target OutPut: " + targetOutput.get(n));
+        
+        for(OutputNeuron n : finalOutputs.keySet())
+            System.out.println("OutPut: " + finalOutputs.get(n));
+        System.out.println("-----------------------------");
+        */
+        
+        saveOutputLayerDeltaWeights(targetOutput);
+        saveHiddenLayerDeltaWeights(hiddenLayer);
+        
+        for (Link l : deltaWeightsCache.keySet())
+            l.updateWeight(deltaWeightsCache.get(l));
+        
+        cleanCacheAfterBackwardPropagation();
     }
 
-    public Map<OutputNeuron, Double> forwardPropagation(NeuralNetworkInput input) {
+    private void cleanCacheAfterBackwardPropagation()
+    {
+        deltasCache.clear();
+        netsCache.clear();
+        deltaWeightsCache.clear();
+    }
+    
+    public NeuralNetworkOutput forwardPropagation(NeuralNetworkInput input) {
+        
         Iterator inputLayerIterator = inputLayer.iterator();
-        Map<OutputNeuron, Double> outputs = new HashMap<OutputNeuron, Double>(outputLayer.size());
-
+        
         if (inputLayer.size() != input.size())
             throw new IllegalArgumentException("Input layer's size does not match given input");
 
-        List<Byte> inputList = input.getInputList();
-        for (Byte d : inputList) {
+        List<Double> inputList = input.getInputList();
+        
+        //For each input neuron we set input value as its net sum
+        for (Double d : inputList) {
             InputNeuron inputNeuron = (InputNeuron) inputLayerIterator.next();
-            inputNeuron.setInput(d);
+            netsCache.put(inputNeuron,d);
         }
 
         //Forward pass in the input layer
@@ -213,20 +235,38 @@ public class NeuralNetwork implements Serializable {
         forwardLayerPass(hiddenLayer);
         //Forward pass in the output layer
         forwardLayerPass(outputLayer);
-
-        for (OutputNeuron outputNeuron : outputLayer)
-            outputs.put(outputNeuron, outputNeuron.getOutput());
-
-        return outputs;
+        
+        return getOutputAndClean();
     }
-
-    public void resetNetwork() {
-        //Sets all currentNets to 0
-        resetLayer(inputLayer);
-        resetLayer(hiddenLayer);
-        resetLayer(outputLayer);
+    
+    public NeuralNetworkOutput getOutputAndClean()
+    {
+        Map<OutputNeuron,Double> finalOutputs= new HashMap<OutputNeuron,Double>();
+        Map<Neuron,Double> nets= new HashMap<Neuron,Double>();
+    
+        for(Neuron n : inputLayer)
+        {
+            nets.put(n,netsCache.get(n));
+            netsCache.remove(n);
+        }
+    
+        for(Neuron n : hiddenLayer)
+        {
+            nets.put(n,netsCache.get(n));
+            netsCache.remove(n);
+        }
+    
+        for(OutputNeuron n : outputLayer)
+        {
+            nets.put(n,netsCache.get(n));
+            finalOutputs.put(n,finalOutputsCache.get(n));
+            netsCache.remove(n);
+            finalOutputsCache.remove(n);
+        }
+        
+        return new NeuralNetworkOutput(finalOutputs,nets);
     }
-
+    
     public Set<InputNeuron> getInputLayer() {
         return inputLayer;
     }
@@ -252,13 +292,13 @@ public class NeuralNetwork implements Serializable {
     }
 
     public static class SimpleNNInput implements NeuralNetworkInput {
-        private final List<Byte> l;
+        private final List<Double> l;
 
-        public SimpleNNInput(List<Byte> l) {
+        public SimpleNNInput(List<Double> l) {
             this.l = l;
         }
 
-        public List<Byte> getInputList() {
+        public List<Double> getInputList() {
             return l;
         }
 
@@ -267,21 +307,21 @@ public class NeuralNetwork implements Serializable {
         }
     }
 
-    public static int AND(byte a, byte b) {
-        if (a == 1 && b == 1)
-            return 1;
+    public static double AND(double a, double b) {
+        if (a == 1.0 && b == 1.0)
+            return 1.0;
         else
-            return 0;
+            return 0.0;
     }
 
-    public static int XOR(byte a, byte b) {
+    public static int XOR(double a, double b) {
         if (a == b)
             return 0;
         else
             return 1;
     }
 
-    public static byte getOneOrZero() {
+    public static double getOneOrZero() {
         double seed = Math.random();
 
         if (seed <= 0.5)
@@ -298,38 +338,36 @@ public class NeuralNetwork implements Serializable {
         for (OutputNeuron n : neuralNetwork.outputLayer)
             outputNeuron = n;
 
-        for (int i = 0; i < 1000000; i++) {
-            byte a = getOneOrZero();
-            byte b = getOneOrZero();
+        for (int i = 0; i < 1000000000; i++) {
+            //double a = getOneOrZero();
+            //double b = getOneOrZero();
 
-            //byte a=(byte)(Math.random()*10),b =(byte)(Math.random()*10);
-            //byte a=100,b=10;
+            double a=(Math.random()*10),b =(Math.random()*10);
+            //byte a=18,b=11;
 
-            List<Byte> l = Arrays.asList(a, b);
+            List<Double> l = Arrays.asList(a, b);
             SimpleNNInput in = new SimpleNNInput(l);
-            Map<OutputNeuron, Double> out = neuralNetwork.forwardPropagation(in);
+            NeuralNetworkOutput out = neuralNetwork.forwardPropagation(in);
 
             Map<OutputNeuron, Double> targetOutputs = new HashMap<OutputNeuron, Double>();
 
-
-            //targetOutputs.put(outputNeuron,(double)a+b);
-            targetOutputs.put(outputNeuron, (double) (AND(a, b)));
+            targetOutputs.put(outputNeuron, a+b);
+            //targetOutputs.put(outputNeuron,(AND(a, b)));
             //targetOutputs.put(outputNeuron,(double)(XOR(a,b)));
 
-            neuralNetwork.backPropagation(targetOutputs);
+            neuralNetwork.backPropagation(out,targetOutputs);
 
-            for (Neuron n : out.keySet())
-                System.out.println(a + " AND " + b + " = " + out.get(n));
-
+            //for (Neuron n : out.getFinalOutputs().keySet())
+            //    System.out.println(a + " AND " + b + " = " + out.getFinalOutputs().get(n));
+            
             /*for(Neuron n: out.keySet())
                 System.out.println(a+" XOR "+ b+ " = "+out.get(n));*/
             
-            /*for(Neuron n: out.keySet())
-                System.out.println(a+" + "+ b+ " = "+out.get(n));*/
-            neuralNetwork.resetNetwork();
+            for(Neuron n: out.getFinalOutputs().keySet())
+                System.out.println(a+" + "+ b+ " = "+out.getFinalOutputs().get(n));
         }
 
-        neuralNetwork.saveNeuralNetwork("AND_NN.ser");
+        //neuralNetwork.saveNeuralNetwork("AND_NN.ser");
         //NeuralNetwork newNeuralNetwork = new NeuralNetwork("AND_NN.ser");
         //System.out.println(neuralNetwork.equals(newNeuralNetwork));
     }

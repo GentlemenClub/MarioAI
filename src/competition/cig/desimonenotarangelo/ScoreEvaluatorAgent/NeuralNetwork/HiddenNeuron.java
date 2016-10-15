@@ -3,6 +3,7 @@ package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
 
 //BEST LINK EVER: https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class HiddenNeuron extends Neuron
@@ -19,11 +20,17 @@ public class HiddenNeuron extends Neuron
   
   public void forwardPass()
   {
-    computeOutput();
+    Map<Neuron,Double> nets = NeuralNetwork.netsCache;
+    double singleOutput = computeOutput(nets.get(this));//Calculates activation function from neuron's net sum
     for(Link link: nextNeurons)
     {
       Neuron currNext = link.getNext();
-      currNext.addNet(output * link.getWeight());
+      Double nextNet = nets.get(currNext);
+      //If it is the first time you add net to the neuron, the net must be initialized to 0
+      if(nextNet==null)
+        nextNet=0.0;
+  
+      nets.put(currNext, nextNet + singleOutput * link.getWeight());
     }
   }
   
@@ -40,23 +47,21 @@ public class HiddenNeuron extends Neuron
           addPrev(neuron);
   }
   
-  protected void computeDelta()
+  protected double computeDelta()
   {
-    //double output = getOutput();
     double sum = 0;
-  
+    
     //for is for future implementations: now only one output node is supported
     for(Link link: nextNeurons)
     {
       Neuron currNext = link.getNext();
-      sum += currNext.getDelta() * link.getWeight();
+      sum +=  NeuralNetwork.deltasCache.get(currNext) * link.getWeight();
     }
-    delta = ((currentNet/ (2*Math.sqrt(currentNet*currentNet+1)))+1) * sum;//Bent Identity
+    double currentNet = NeuralNetwork.netsCache.get(this);
+    return ((currentNet/ (2*Math.sqrt(currentNet*currentNet+1)))+1) * sum;//Bent Identity
     /*OLD SIGMOID
     delta = output*(1-output)*sum;*/
   }
-  
-  protected double getDelta() { return delta; }
   
   public Set<Link> getPrevNeurons(){ return prevNeurons;}
   public Set<Link> getNextNeurons(){ return nextNeurons;}

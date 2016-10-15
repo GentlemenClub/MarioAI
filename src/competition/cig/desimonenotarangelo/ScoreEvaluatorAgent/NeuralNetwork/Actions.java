@@ -12,9 +12,5 @@ public class Actions
   public static final int KEY_JUMP = 3;
   public static final int KEY_SPEED = 4;
   
-  void SetAction(boolean[] Action)
-  {
-    
-  }
   
 }
