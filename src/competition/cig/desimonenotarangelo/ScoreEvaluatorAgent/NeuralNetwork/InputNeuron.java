@@ -8,9 +8,9 @@ import java.util.Set;
 public class InputNeuron extends Neuron {
     protected final Set<Link> nextNeurons;
 
-    public InputNeuron(double bias)
+    public InputNeuron(double bias, ActivationFunction activationFunction)
     {
-        super(bias);
+        super(bias, activationFunction);
         nextNeurons = new HashSet<Link>();
     }
     
