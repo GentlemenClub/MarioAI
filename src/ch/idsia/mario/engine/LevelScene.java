@@ -36,7 +36,8 @@ public class LevelScene extends Scene implements SpriteContext
     public boolean paused = false;
     public int startTime = 0;
     public static int timeLeft;
-
+    public static int currentLevelLength;
+    
     public int getTotalTime() {  return totalTime; }
 
     public void setTotalTime(int totalTime) {  this.totalTime = totalTime; }
@@ -68,6 +69,7 @@ public class LevelScene extends Scene implements SpriteContext
         this.levelDifficulty = levelDifficulty;
         this.levelType = type;
         this.levelLength = levelLength;
+        currentLevelLength = levelLength;
         this.setTotalTime(timeLimit);
         killedCreaturesTotal = 0;
         killedCreaturesByFireBall = 0;

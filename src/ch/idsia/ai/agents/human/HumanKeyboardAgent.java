@@ -2,6 +2,7 @@ package ch.idsia.ai.agents.human;
 
 import ch.idsia.ai.agents.Agent;
 import ch.idsia.mario.engine.LevelScene;
+import ch.idsia.mario.engine.level.Level;
 import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.mario.environments.Environment;
 import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.ScoreEvaluatorAgent;
@@ -10,6 +11,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+
+import static ch.idsia.mario.engine.Art.mario;
 
 /**
  * Created by IntelliJ IDEA.

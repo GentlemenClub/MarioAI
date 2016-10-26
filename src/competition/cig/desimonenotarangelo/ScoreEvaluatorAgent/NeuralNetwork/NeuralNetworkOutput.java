@@ -13,9 +13,9 @@ public class NeuralNetworkOutput
     this.nets=nets;
   }
   
-  protected Map<Neuron,Double> getNets()//Returns net for each node in the network
+  public Map<Neuron,Double> getNets()//Returns net for each node in the network
   {return nets;}
   
-  protected Map<OutputNeuron,Double> getFinalOutputs()///Returns output for each output neuron
+  public Map<OutputNeuron,Double> getFinalOutputs()///Returns output for each output neuron
   {return finalOutputs;}
 }
