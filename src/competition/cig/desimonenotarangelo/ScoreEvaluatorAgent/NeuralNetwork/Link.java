@@ -13,9 +13,9 @@ public class Link implements Serializable {
         this.prev = in;
         this.next = out;
         if (!weights.containsKey(this))//if the key exists, don't overwrite the value
-             weights.put(this,0.1);
+          weights.put(this, Math.random());
     
-        // weights.put(this, Math.random());
+        //weights.put(this,0.1);
     }
 
     public Neuron getPrev() { return prev; }

@@ -18,16 +18,16 @@ public class Learner
     try {
       network = new NeuralNetwork(nnFileName);
     } catch (IOException | ClassNotFoundException e) {
-      ActivationFunction activationFunction = new BentIdentity();
+      ActivationFunction activationFunction = new SigmoidFunction();
       network = new NeuralNetworkBuilder()
               .setInputLayerActivationFunction(activationFunction)
               .setHiddenLayersActivationFunction(activationFunction)
               .setOutputLayerActivationFunction(activationFunction)
               .addInputLayer(88)
               .addHiddenLayer(22)
-              .addHiddenLayer(22)
+              //.addHiddenLayer(22)
               .addOutputLayer(1)
-              .setEta(0.0000002)
+              .setEta(0.0002)
               .build();
       System.out.println("Creating new neural network");
     }
@@ -73,7 +73,7 @@ public class Learner
     
     NNInput(QState state, boolean[] actions)
     {
-      byte[][] observation = state.getObservation();
+      double[][] observation = state.getObservation();
       int totalInputSize = observation.length*observation.length + actions.length + 2;
       
       //inputAsList contains all neural network inputs mapped into a single list
@@ -89,14 +89,14 @@ public class Learner
         inputAsList.add(actions[i] ? 1.0 : 0.0);
   
       inputAsList.add(state.getLevelPosition());
-      inputAsList.add(getRewardFromMarioMode(state.getMarioMode()));
+      inputAsList.add(state.getMarioMode());
     }
     
     public List<Double> getInputList() { return inputAsList; }
     public int size() { return inputAsList.size(); }
   }
     
-  public static double getRewardFromMarioMode(int marioMode)
+  /*public static double getRewardFromMarioMode(int marioMode)
   {
     switch(marioMode)
     {
@@ -109,7 +109,7 @@ public class Learner
       default:
         return 0;
     }
-  }
+  }*/
   
   private boolean[] getRandomAction()
   {
@@ -125,37 +125,83 @@ public class Learner
   public boolean[] getAction(QState state)
   {
     double rand = Math.random();
-    boolean[] chosenAction = getRandomAction();
-    double maxQvalue = Double.NEGATIVE_INFINITY;
+    boolean[] chosenAction;
   
     //Exploration
     if (rand < epsilon)
     {
+      chosenAction = getRandomAction();
       NNInput nnInput = new NNInput(state, chosenAction);
       lastNNOutput = network.forwardPropagation(nnInput);//Needed for backpropagation
       System.out.println(getQvalue(lastNNOutput));
     }
     //Exploitation
     else
-    {
-      ActionIterator iterator = new ActionIterator();
-      boolean[] currAction;
+      chosenAction = getBestAction(state);
+    
+    return chosenAction;
+  }
   
-      while (iterator.hasNext())
+  public boolean[] getBestAction(QState state)
+  {
+    ActionIterator iterator = new ActionIterator();
+    boolean[] currAction;
+    double maxQvalue = Double.NEGATIVE_INFINITY;
+    boolean[] chosenAction = null;//As long as maxQValue is negative infinity, this variable is always assigned
+    //System.out.println("----------------------------");
+  
+    while (iterator.hasNext())
+    {
+      currAction = iterator.next();
+      NNInput nnInput = new NNInput(state, currAction);
+      NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
+      double currQvalue = getQvalue(nnOutput);
+      //printActionArray(currAction);
+      /// System.out.println("QValue = "+ currQvalue);
+      
+      if (currQvalue > maxQvalue)
       {
-        currAction = iterator.next();
-        NNInput nnInput = new NNInput(state, currAction);
-        NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
-        double currQvalue = getQvalue(nnOutput);
-        if (currQvalue > maxQvalue)
+        maxQvalue = currQvalue;
+        chosenAction = currAction;
+        lastNNOutput = nnOutput;//Needed for backpropagation
+      }
+      //System.out.println("----------------------------");
+    }
+    
+    if(chosenAction==null)
+      System.out.println("OMG");
+    
+    
+    return chosenAction;
+  }
+  
+  private void printActionArray(boolean[] action)
+  {
+    for(int i=0;i<action.length;i++)
+    {
+      if(action[i])
+      {
+        switch (i)
         {
-          maxQvalue = currQvalue;
-          chosenAction = currAction;
-          lastNNOutput = nnOutput;//Needed for backpropagation
+          case 0:
+            System.out.print("LEFT |");
+            break;
+          case 1:
+            System.out.print("RIGHT |");
+            break;
+          case 2:
+            System.out.print("DOWN |");
+            break;
+          case 3:
+            System.out.print("JUMP |");
+            break;
+          case 4:
+            System.out.print("SPEED |");
+            break;
         }
       }
     }
-    return chosenAction;
+    System.out.println();
   }
   
   public void learn(QState nextState, double nextStateReward)//nuovo stato
@@ -165,10 +211,9 @@ public class Learner
 
     Map<OutputNeuron,Double> targetOutput = new HashMap<OutputNeuron,Double>(lastNNOutput.getFinalOutputs());
   
-    NNInput nnInput = new NNInput(nextState, getAction(nextState));
+    NNInput nnInput = new NNInput(nextState, getBestAction(nextState));
     NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
     qValueSt_nextAt_next = getQvalue(nnOutput);
-            
     qValueStAt = qValueStAt + alfa *(nextStateReward + gamma * qValueSt_nextAt_next - qValueStAt);
     
     setTargetQvalue(targetOutput,qValueStAt);

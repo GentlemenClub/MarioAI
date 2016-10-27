@@ -4,18 +4,18 @@ import ch.idsia.mario.engine.sprites.Mario;
 
 public class QState
 {
-  private byte[][] observation;
+  private double[][] observation;
   private double levelPosition;
-  private int marioMode;
+  private double marioMode;
   
-  public QState(byte[][] observation, double levelPosition, int marioMode)
+  public QState(double[][] observation, double levelPosition, double marioMode)
   {
     this.observation = observation;
     this.levelPosition = levelPosition;
     this.marioMode = marioMode;
   }
   
-  public byte[][] getObservation()
+  public double[][] getObservation()
   {
     return observation;
   }
@@ -23,7 +23,7 @@ public class QState
   {
     return levelPosition;
   }
-  public int getMarioMode()
+  public double getMarioMode()
   {
     return marioMode;
   }
