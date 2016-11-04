@@ -24,7 +24,7 @@ public class Play {
     {
       Agent controller = new ScoreEvaluatorAgent();
       
-      for(int i=0 ; i<1000; i++)
+      for(int i=0 ; i<1000000; i++)
       {
         if (args.length > 0)
         {

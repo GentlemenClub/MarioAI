@@ -11,7 +11,12 @@ public class OutputNeuron extends Neuron {
         super(bias, activationFunction);
         prevNeurons = new HashSet<Link>();
     }
-
+    
+    public OutputNeuron(double bias, ActivationFunction activationFunction, String id) {
+        super(bias, activationFunction,id);
+        prevNeurons = new HashSet<Link>();
+    }
+    
     public void forwardPass() {
         Map<Neuron, Double> nets = NeuralNetwork.netsCache;
         Map<Neuron, Double> finalOutputs = NeuralNetwork.finalOutputsCache;

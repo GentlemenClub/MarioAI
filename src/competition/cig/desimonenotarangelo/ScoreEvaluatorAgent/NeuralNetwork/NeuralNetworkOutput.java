@@ -1,6 +1,7 @@
 package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
 
 import java.util.Map;
+import java.util.Set;
 
 public class NeuralNetworkOutput
 {
@@ -18,4 +19,31 @@ public class NeuralNetworkOutput
   
   public Map<OutputNeuron,Double> getFinalOutputs()///Returns output for each output neuron
   {return finalOutputs;}
+  
+  public OutputNeuron getMaxValueNeuron()
+  {
+    double currMax = Double.NEGATIVE_INFINITY;
+    OutputNeuron maxValueNeuron = null;
+    
+    for(OutputNeuron n: finalOutputs.keySet())
+    {
+      double currValue = finalOutputs.get(n);
+      if(currMax<currValue)
+      {
+        maxValueNeuron = n;
+        currMax = currValue;
+      }
+    }
+    return maxValueNeuron;
+  }
+  
+  public Map<OutputNeuron,Double> getFinalOutputs(OutputNeuron n)
+  {
+    return finalOutputs;
+  }
+  
+  public double getValue(OutputNeuron n)
+  {
+    return finalOutputs.get(n);
+  }
 }

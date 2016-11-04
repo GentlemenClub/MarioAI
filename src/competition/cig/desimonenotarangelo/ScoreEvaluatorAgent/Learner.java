@@ -12,22 +12,46 @@ public class Learner
   private NeuralNetworkOutput lastNNOutput = null;
   private double alfa = 0.7, gamma = 0.4;
   private String nnFileName = "MarioAI.ai";
-  
+  private final static int nActions=32;
+  private final static int nButtons=5;
+  private OutputNeuron lastChosenActionNeuron;
+          
   public Learner(double epsilon)
   {
     try {
       network = new NeuralNetwork(nnFileName);
     } catch (IOException | ClassNotFoundException e) {
-      ActivationFunction activationFunction = new SigmoidFunction();
+      ActivationFunction activationFunction = new BentIdentity();//SigmoidFunction();//
+      //ActivationFunction inputActivationFunction = new SigmoidFunction();//
+  
+      ActionIterator iterator = new ActionIterator();
+      String[] ids = new String[nActions];
+      int i=0;
+      
+      while(iterator.hasNext())
+      {
+        boolean currAction[] = iterator.next();
+        String currActionString="";
+        for(int j=0; j<currAction.length; j++)
+        {
+          if(j==0)
+            currActionString = Boolean.toString(currAction[j]);
+          else
+            currActionString += " " + Boolean.toString(currAction[j]);
+        }
+        ids[i++] = currActionString;
+      }
+      
       network = new NeuralNetworkBuilder()
               .setInputLayerActivationFunction(activationFunction)
               .setHiddenLayersActivationFunction(activationFunction)
               .setOutputLayerActivationFunction(activationFunction)
-              .addInputLayer(88)
-              .addHiddenLayer(22)
-              //.addHiddenLayer(22)
-              .addOutputLayer(1)
-              .setEta(0.0002)
+              .addInputLayer(81)// Environment 9x9
+              .addHiddenLayer(30)
+              .addHiddenLayer(15)
+              .addHiddenLayer(10)
+              .addOutputLayer(ids)
+              .setEta(0.0000000002)
               .build();
       System.out.println("Creating new neural network");
     }
@@ -67,14 +91,57 @@ public class Learner
     public void remove() { throw new UnsupportedOperationException(); }
   }
   
+  /*private static boolean[] oneHotEncodingToAction(boolean action[])
+  {
+    //Gets Index
+    int i=0;
+      while(!action[i])
+        i++;
+    
+    String bin = Integer.toBinaryString(i);
+    while (bin.length() < 5)
+      bin = "0" + bin;
+    char[] chars = bin.toCharArray();
+    boolean[] boolArray = new boolean[5];
+  
+    for (int j = 0; j < chars.length; j++)
+      boolArray[j] = chars[j] == '0';
+    
+    return boolArray;
+  }*/
+  /*
+  public static class ActionIterator implements Iterator
+  {
+    private int count=0;
+    private final int nActions=32;
+    boolean[] boolArray = new boolean[nActions];
+  
+    @Override
+    public boolean hasNext() { return count < nActions;}
+    
+    @Override
+    public boolean[] next()
+    {
+      boolArray[count]=true;//Sets current action as true
+      
+      if(count>0)
+        boolArray[count-1]=false;//Set previous action as false
+      count++;
+      return boolArray;
+    }
+    
+    @Override
+    public void remove() { throw new UnsupportedOperationException(); }
+  }
+  */
   private class NNInput implements NeuralNetworkInput
   {
     List<Double> inputAsList;
     
-    NNInput(QState state, boolean[] actions)
+    NNInput(QState state)
     {
       double[][] observation = state.getObservation();
-      int totalInputSize = observation.length*observation.length + actions.length + 2;
+      int totalInputSize = observation.length*observation.length;
       
       //inputAsList contains all neural network inputs mapped into a single list
       inputAsList = new ArrayList<Double>(totalInputSize);
@@ -82,14 +149,7 @@ public class Learner
       //Environment input
       for(int i=0;i<observation.length;i++)
         for(int j=0;j<observation.length;j++)
-          inputAsList.add((double)observation[i][j]);
-  
-      //Action input
-      for(int i=0;i<actions.length;i++)
-        inputAsList.add(actions[i] ? 1.0 : 0.0);
-  
-      inputAsList.add(state.getLevelPosition());
-      inputAsList.add(state.getMarioMode());
+          inputAsList.add(observation[i][j]);
     }
     
     public List<Double> getInputList() { return inputAsList; }
@@ -111,35 +171,59 @@ public class Learner
     }
   }*/
   
-  private boolean[] getRandomAction()
-  {
-    boolean[] randomAction = new boolean[5];
-    Random random = new Random();
-    
-    for(int i=0; i< randomAction.length; i++)
-        randomAction[i]=random.nextBoolean();
-    
-    return randomAction;
-  }
-  
   public boolean[] getAction(QState state)
   {
     double rand = Math.random();
     boolean[] chosenAction;
-  
+    System.out.println("----------------------------");
     //Exploration
     if (rand < epsilon)
     {
-      chosenAction = getRandomAction();
-      NNInput nnInput = new NNInput(state, chosenAction);
-      lastNNOutput = network.forwardPropagation(nnInput);//Needed for backpropagation
-      System.out.println(getQvalue(lastNNOutput));
+      chosenAction = getRandomAction(state);
+      System.out.println("Exploration");
     }
     //Exploitation
     else
+    {
       chosenAction = getBestAction(state);
+      System.out.println("Exploitation");
+    }
     
+    for(OutputNeuron n: lastNNOutput.getFinalOutputs().keySet())
+    {
+      printActionArray(parseActionString(n.getId()));
+      System.out.print("QValue = " + lastNNOutput.getValue(n));
+      if(Arrays.equals(parseActionString(n.getId()),chosenAction))
+      {
+        lastChosenActionNeuron = n;
+        System.out.print("  <-------------Chosen Action");
+      }
+      System.out.println();
+    }
+    
+    System.out.println("----------------------------");
     return chosenAction;
+  }
+  
+  private boolean[] getRandomAction(QState state)
+  {
+    boolean[] randomAction = new boolean[nActions];
+    Random random = new Random();
+    randomAction[random.nextInt(nActions)] = true;
+    
+    NNInput nnInput = new NNInput(state);
+    lastNNOutput = network.forwardPropagation(nnInput);//Needed for backpropagation
+    
+    return randomAction;
+  }
+  
+  public boolean[] parseActionString(String actionId)
+  {
+    String[] parts = actionId.split(" ");
+    boolean[] action = new boolean[nButtons];
+    for(int i =0; i<nButtons; i++)
+      action[i] = Boolean.parseBoolean(parts[i]);
+    return action;
   }
   
   public boolean[] getBestAction(QState state)
@@ -148,34 +232,21 @@ public class Learner
     boolean[] currAction;
     double maxQvalue = Double.NEGATIVE_INFINITY;
     boolean[] chosenAction = null;//As long as maxQValue is negative infinity, this variable is always assigned
-    //System.out.println("----------------------------");
   
-    while (iterator.hasNext())
-    {
-      currAction = iterator.next();
-      NNInput nnInput = new NNInput(state, currAction);
-      NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
-      double currQvalue = getQvalue(nnOutput);
-      //printActionArray(currAction);
-      /// System.out.println("QValue = "+ currQvalue);
-      
-      if (currQvalue > maxQvalue)
-      {
-        maxQvalue = currQvalue;
-        chosenAction = currAction;
-        lastNNOutput = nnOutput;//Needed for backpropagation
-      }
-      //System.out.println("----------------------------");
-    }
+    NNInput nnInput = new NNInput(state);
+    NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
+    OutputNeuron maxQValueNeuron = nnOutput.getMaxValueNeuron();
+    
+    chosenAction = parseActionString(maxQValueNeuron.getId());
+    lastNNOutput = nnOutput;
     
     if(chosenAction==null)
       System.out.println("OMG");
     
-    
     return chosenAction;
   }
   
-  private void printActionArray(boolean[] action)
+  private static void printActionArray(boolean[] action)
   {
     for(int i=0;i<action.length;i++)
     {
@@ -204,41 +275,37 @@ public class Learner
     System.out.println();
   }
   
-  public void learn(QState nextState, double nextStateReward)//nuovo stato
+  public void learn(QState nextState, double nextStateReward)
   {
-    double qValueStAt = getQvalue(lastNNOutput);
+    //double qValueStAt = lastNNOutput.getValue(lastChosenActionNeuron);
     double qValueSt_nextAt_next;
 
-    Map<OutputNeuron,Double> targetOutput = new HashMap<OutputNeuron,Double>(lastNNOutput.getFinalOutputs());
+    Map<OutputNeuron,Double> targetOutputs = new HashMap<OutputNeuron,Double>(lastNNOutput.getFinalOutputs());
   
-    NNInput nnInput = new NNInput(nextState, getBestAction(nextState));
-    NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
-    qValueSt_nextAt_next = getQvalue(nnOutput);
-    qValueStAt = qValueStAt + alfa *(nextStateReward + gamma * qValueSt_nextAt_next - qValueStAt);
+    NNInput nextStateNNInput = new NNInput(nextState);
+    NeuralNetworkOutput nnOutput = network.forwardPropagation(nextStateNNInput);
+    OutputNeuron nextStateMaxValueNeuron = nnOutput.getMaxValueNeuron();
+    qValueSt_nextAt_next = nextStateReward + gamma * nnOutput.getValue(nextStateMaxValueNeuron);
     
-    setTargetQvalue(targetOutput,qValueStAt);
+    //qValueStAt = qValueStAt + alfa *(nextStateReward + gamma * qValueSt_nextAt_next - qValueStAt);
     
-    network.backPropagation(lastNNOutput,targetOutput);
+    targetOutputs.put(lastChosenActionNeuron,qValueSt_nextAt_next);
+    
+    network.backPropagation(lastNNOutput,targetOutputs);
   }
   
-  private void setTargetQvalue(Map<OutputNeuron,Double> targetOutput, double qValue)
+  public static void main(String argv[])
   {
-    if(targetOutput.size()!=1)
-      throw new IllegalArgumentException();
+    ActionIterator iterator = new ActionIterator();
+    boolean[] currAction;
     
-    for(OutputNeuron n: targetOutput.keySet())
-      targetOutput.put(n,qValue);
-  }
-  
-  private double getQvalue(NeuralNetworkOutput nnOutput)
-  {
-    if(nnOutput.getFinalOutputs().size()!=1)
-      throw new IllegalArgumentException();
-    
-    for(OutputNeuron n: nnOutput.getFinalOutputs().keySet())
-      return nnOutput.getFinalOutputs().get(n);
-    
-    return 0.0;
+    /*while(iterator.hasNext())
+    {
+      currAction = iterator.next();
+      printActionArray(oneHotEncodingToAction(currAction));
+    }*/
+    //for(int i =0; i<100 ; i++)
+    //  printActionArray(oneHotEncodingToAction(getRandomAction()));
   }
   
   /*

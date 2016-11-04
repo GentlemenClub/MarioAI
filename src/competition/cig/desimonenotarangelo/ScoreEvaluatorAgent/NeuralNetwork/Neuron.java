@@ -24,7 +24,18 @@ public abstract class Neuron implements Serializable {
         this.activationFunction = activationFunction;
         this.id = UUID.randomUUID().toString();
     }
-
+    
+    public String getId()
+    {
+        return id;
+    }
+    
+    public Neuron(double bias, ActivationFunction activationFunction, String id) {
+        this.bias = bias;
+        this.activationFunction = activationFunction;
+        this.id = id;
+    }
+    
     //public void addNet(double singleNet ) { currentNet+=singleNet; }
     //public void resetNet(){ currentNet=0; }
     //protected double getCurrentNet(){ return currentNet; }

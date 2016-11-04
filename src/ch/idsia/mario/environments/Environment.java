@@ -14,7 +14,6 @@ public interface Environment
     public static final int numberOfObservationElements = 486 + 1;
     public static final int HalfObsWidth = 11;
     public static final int HalfObsHeight = 11;
-
     // always the same dimensionality: 22x22
     // always centered on the agent
 
@@ -34,6 +33,7 @@ public interface Environment
     public float[] getMarioFloatPos();
 
     public int getMarioMode();
+    public int getMarioStatus();
 
     public float[] getEnemiesFloatPos();
 

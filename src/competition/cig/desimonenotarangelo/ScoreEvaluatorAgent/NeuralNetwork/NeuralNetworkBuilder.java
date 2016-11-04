@@ -74,7 +74,27 @@ public class NeuralNetworkBuilder {
 
         return this;
     }
-
+    
+    public NeuralNetworkBuilder addOutputLayer(String... outputIDs) {
+        
+        if (!outputLayer.isEmpty())
+            throw new IllegalStateException("Output Layer already added");
+        
+        //get last hidden layer
+        Set<HiddenNeuron> lastHiddenLayer = hiddenLayers.get(hiddenLayers.size() - 1);
+        for (int i = 0; i < outputIDs.length; i++) {
+            OutputNeuron outputNeuron = new OutputNeuron(outputBias, outputLayerActivationFunction, outputIDs[i]);
+            outputNeuron.linkToPrevLayer(lastHiddenLayer);
+            outputLayer.add(outputNeuron);
+        }
+        //need to link output layer with the last hidden layer
+        for (HiddenNeuron hiddenNeuron : lastHiddenLayer)
+            hiddenNeuron.linkToNextLayer(outputLayer);
+        
+        return this;
+    }
+    
+    
     public NeuralNetworkBuilder setInputLayerActivationFunction(ActivationFunction inputLayerActivationFunction) {
         this.inputLayerActivationFunction = inputLayerActivationFunction;
         for (InputNeuron inputNeuron : inputLayer)
