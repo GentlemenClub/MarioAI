@@ -10,7 +10,7 @@ public class Learner
   private NeuralNetwork network;
   private double epsilon;
   private NeuralNetworkOutput lastNNOutput = null;
-  private double alfa = 0.7, gamma = 0.4;
+  private double alfa = 0.7, gamma = 0.6;
   private String nnFileName = "MarioAI.ai";
   private final static int nActions=32;
   private final static int nButtons=5;
@@ -51,7 +51,7 @@ public class Learner
               .addHiddenLayer(15)
               .addHiddenLayer(10)
               .addOutputLayer(ids)
-              .setEta(0.0000000002)
+              .setEta(0.00000002)
               .build();
       System.out.println("Creating new neural network");
     }
@@ -197,6 +197,7 @@ public class Learner
       {
         lastChosenActionNeuron = n;
         System.out.print("  <-------------Chosen Action");
+        System.out.print("");
       }
       System.out.println();
     }
@@ -207,9 +208,11 @@ public class Learner
   
   private boolean[] getRandomAction(QState state)
   {
-    boolean[] randomAction = new boolean[nActions];
+    boolean[] randomAction = new boolean[nButtons];
     Random random = new Random();
-    randomAction[random.nextInt(nActions)] = true;
+    
+    for(int i=0; i< nButtons; i++)
+      randomAction[i] = random.nextBoolean();
     
     NNInput nnInput = new NNInput(state);
     lastNNOutput = network.forwardPropagation(nnInput);//Needed for backpropagation

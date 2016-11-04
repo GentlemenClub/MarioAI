@@ -16,11 +16,12 @@ public class ScoreEvaluatorAgent implements Agent {
     private boolean scoreInitialized = false;
     private Learner myLearner;
     private double lastScore = 0.0;
+    private double epsilon = 0.2;
     
     public ScoreEvaluatorAgent()
     {
         this.name = getClass().getName();
-        myLearner = new Learner(0.2);
+        myLearner = new Learner(epsilon);
     }
 
     public void saveAI() { myLearner.saveStatus(); }
@@ -42,7 +43,10 @@ public class ScoreEvaluatorAgent implements Agent {
     
     public double getTotalScore(Environment observation)
     {
-        return getLevelPosition(observation);
+        return getLevelPosition(observation)*100 +
+                getRewardFromMarioStatus(observation.getMarioStatus())+
+                getMarioModeValue(observation.getMarioMode())+
+                Mario.coins*10;
     }
     
     private double getReward(Environment observation)
@@ -90,11 +94,13 @@ public class ScoreEvaluatorAgent implements Agent {
         {
             case Mario.STATUS_DEAD :
                 if(getTimeLeft()>0)//Gives penalty only if mario is dead for a mistake and not for timeout
-                  return -10000;
+                  return -100;
+                else
+                  return 0;
             case Mario.STATUS_WIN :
-                return +10000;
+                return +100;
             default :
-                return -10;
+                return 0;
         }
     }
     
@@ -169,6 +175,8 @@ public class ScoreEvaluatorAgent implements Agent {
         double normalizedMarioMode = normalizeValue(observation.getMarioMode(),
                                                     0,2,
                                                     0,1);
+    
+        boolean isMarioIsDead = (observation.getMarioStatus()==Mario.STATUS_DEAD);
         
         QState qState = new QState(getSubObservation(observation));
         if(!scoreInitialized)//First time only
@@ -178,12 +186,11 @@ public class ScoreEvaluatorAgent implements Agent {
             lastScore = getTotalScore(observation);
             scoreInitialized = true;
         }
-        else if(passedTurns<actionTurns)//Same action must be done other times
+        else if(passedTurns<actionTurns && !isMarioIsDead)//Same action must be done other times
             passedTurns++;
         else//New action need to be decided
         {
             passedTurns = 0;
-
             double reward = getReward(observation);
             myLearner.learn(qState,reward);
             action = myLearner.getAction(qState);
