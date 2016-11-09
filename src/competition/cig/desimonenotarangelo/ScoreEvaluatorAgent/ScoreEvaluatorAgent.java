@@ -5,23 +5,31 @@ import ch.idsia.mario.engine.LevelScene;
 import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.mario.environments.Environment;
 
+import static competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.PatternHoleRecognition.*;
+
 public class ScoreEvaluatorAgent implements Agent {
     
     private String name;
     private boolean[] action;
     private double lastCoins = 0;
     private int lastMarioMode = 2;
-    private final int actionTurns=5;
+    private final int actionTurns=1;
     private int passedTurns=actionTurns;
     private boolean scoreInitialized = false;
     private Learner myLearner;
-    private double lastScore = 0.0;
-    private double epsilon = 0.2;
+    private double lastScore;
+    private int nJumpedHoles;
+    private double lastHolePosX;
+    private PatternHoleRecognition.MarioHoleStatus lastMarioHoleStatus;
+    
+    private final double epsilon = 0.2;
+    private final double holePosEpsilon = 200;
     
     public ScoreEvaluatorAgent()
     {
         this.name = getClass().getName();
         myLearner = new Learner(epsilon);
+        resetMarioValues();
     }
 
     public void saveAI() { myLearner.saveStatus(); }
@@ -31,14 +39,22 @@ public class ScoreEvaluatorAgent implements Agent {
         switch(mode)
         {
             case 0:
-                return 5;
+                return 50;
             case 1:
-                return 20;
+                return 400;
             case 2:
-                return 30;
+                return 600;
             default:
                 return 0;
         }
+    }
+    
+    public void resetMarioValues()
+    {
+        lastScore = 0.0;
+        nJumpedHoles = 0;
+        lastHolePosX = 0.0;
+        lastMarioHoleStatus = PatternHoleRecognition.MarioHoleStatus.BEFORE;
     }
     
     public double getTotalScore(Environment observation)
@@ -46,7 +62,9 @@ public class ScoreEvaluatorAgent implements Agent {
         return getLevelPosition(observation)*100 +
                 getRewardFromMarioStatus(observation.getMarioStatus())+
                 getMarioModeValue(observation.getMarioMode())+
-                Mario.coins*10;
+                observation.getKillsTotal()*100+
+                Mario.coins*10+
+                nJumpedHoles*100;
     }
     
     private double getReward(Environment observation)
@@ -98,7 +116,7 @@ public class ScoreEvaluatorAgent implements Agent {
                 else
                   return 0;
             case Mario.STATUS_WIN :
-                return +100;
+                return +1000;
             default :
                 return 0;
         }
@@ -190,6 +208,19 @@ public class ScoreEvaluatorAgent implements Agent {
             passedTurns++;
         else//New action need to be decided
         {
+            MarioHoleStatus currentHoleStatus = getMarioHoleStatus(observation);
+            if(currentHoleStatus.equals(MarioHoleStatus.AFTER))
+                System.out.print("");
+            
+            
+            if(!lastMarioHoleStatus.equals(MarioHoleStatus.AFTER) && currentHoleStatus.equals(MarioHoleStatus.AFTER) &&
+                    lastHolePosX < observation.getMarioFloatPos()[0] - holePosEpsilon)
+            {
+                nJumpedHoles++;
+                lastHolePosX = observation.getMarioFloatPos()[0];
+            }
+            
+            lastMarioHoleStatus = currentHoleStatus;
             passedTurns = 0;
             double reward = getReward(observation);
             myLearner.learn(qState,reward);

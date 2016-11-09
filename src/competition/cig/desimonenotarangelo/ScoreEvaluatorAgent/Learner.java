@@ -51,7 +51,7 @@ public class Learner
               .addHiddenLayer(15)
               .addHiddenLayer(10)
               .addOutputLayer(ids)
-              .setEta(0.00000002)
+              .setEta(0.000000002)
               .build();
       System.out.println("Creating new neural network");
     }

@@ -39,35 +39,11 @@ public class HumanKeyboardAgent extends KeyAdapter implements Agent {
         String[] formattedObservation = getFormattedMatrix(completeObservation);
 
         //System.out.println(arrayToString(formattedObservation));
-        int marioX = formattedObservation[0].length() / 2, marioY = 11;
-
-        PatternHoleMatchingResult result = PatternHoleRecognition.getMatchedPosition(formattedObservation, PatternHoleRecognition.patterns, marioY);
-
-        if (result.matchedRow != -1 && result.matchedColumn != -1) {
-            System.out.println("Mario X: " + marioX + ", Mario Y: " + marioY);
-            System.out.println("Matched X: " + result.matchedRow + ", Matched Y: " + result.matchedColumn);
-            System.out.println("Pattern found: " + PatternHoleRecognition.patterns[result.patternIndex]);
-
-            System.out.println("isMarioBeforeTheHole: " + isMarioBeforeTheHole(marioX, marioY, result));
-            System.out.println("isMarioOnTheHole: " + isMarioOnTheHole(marioX, marioY, result));
-            System.out.println("isMarioAfterTheHole: " + isMarioAfterTheHole(marioX, marioY, result));
-
-            System.out.println("_________________________");
-        }
+    
+        MarioHoleStatus currentHoleStatus = getMarioHoleStatus(observation);
+        //if(currentHoleStatus.equals(PatternHoleRecognition.MarioHoleStatus.AFTER))
+        System.out.println(currentHoleStatus.toString());
         return Action;
-    }
-
-    private String[] getFormattedMatrix(byte[][] completeObservation) {
-        String[] matrix = new String[22];
-        for (int i = 0; i < 22; i++) {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int j = 0; j < 22; j++) {
-                stringBuilder.append(String.format("[%3d]", completeObservation[i][j]));
-            }
-            matrix[i] = stringBuilder.toString();
-        }
-
-        return matrix;
     }
 
     private String arrayToString(String[] a) {
