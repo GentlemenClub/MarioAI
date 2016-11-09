@@ -257,12 +257,9 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
   </component>
   <component name="libraryTable">
-    <library name="com.google.code.gson:gson:2.7" type="repository">
-      <properties maven-id="com.google.code.gson:gson:2.7" />
-      <CLASSES>
-        <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.7/gson-2.7.jar!/" />
-        <root url="jar://$MAVEN_REPOSITORY$/com/google/code/gson/gson/2.7/gson-2.7.jar!/" />
-      </CLASSES>
+    <library name="org.apache.karaf.eik.plugins:org.apache.commons.lang:2.6" type="repository">
+      <properties maven-id="org.apache.karaf.eik.plugins:org.apache.commons.lang:2.6" />
+      <CLASSES />
       <JAVADOC />
       <SOURCES />
     </library>

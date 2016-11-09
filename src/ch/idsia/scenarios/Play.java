@@ -22,7 +22,7 @@ public class Play {
 
     public static void main(String[] args)
     {
-      Agent controller = new ScoreEvaluatorAgent();
+      Agent controller = new HumanKeyboardAgent();
       
       for(int i=0 ; i<1000000; i++)
       {
@@ -34,15 +34,15 @@ public class Play {
         EvaluationOptions options = new CmdLineOptions(new String[0]);
         options.setAgent(controller);
         Task task = new ProgressTask(options);
-        options.setMaxFPS(true);
+        options.setMaxFPS(false);
         options.setVisualization(true);
         options.setNumberOfTrials(1);
         options.setMatlabFileName("");
-        options.setLevelRandSeed(1);//((int) (Math.random() * Integer.MAX_VALUE));
-        options.setLevelDifficulty(1);
+        options.setLevelRandSeed((int) (Math.random() * Integer.MAX_VALUE));
+        options.setLevelDifficulty(3);
         task.setOptions(options);
         System.out.println("Score: " + task.evaluate(controller)[0]);
-        ((ScoreEvaluatorAgent) controller).saveAI();
+        //((ScoreEvaluatorAgent) controller).saveAI();
       }
     }
 }
