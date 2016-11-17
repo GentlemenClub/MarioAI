@@ -1,8 +1,13 @@
 
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 //Main Neural Network class: it takes the byte[][] environment of the game as input
 //and outputs the predicted delta score for one action
+
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.BentIdentity;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.HiddenNeuron;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.Neuron;
 
 import java.io.*;
 import java.util.*;

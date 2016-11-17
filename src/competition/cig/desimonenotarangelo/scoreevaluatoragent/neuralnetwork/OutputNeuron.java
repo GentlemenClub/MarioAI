@@ -1,4 +1,7 @@
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
+
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -23,24 +26,24 @@ public class OutputNeuron extends Neuron {
         finalOutputs.put(this, computeOutput(nets.get(this)));
     }
 
-    public void addNext(Neuron prev) {
+    public void addNext(Neuron prev, WeightInitializer weightInitializer) {
         throw new UnsupportedOperationException();
     }
 
-    public void linkToNextLayer(Set<? extends Neuron> layer) {
+    public void linkToNextLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer) {
         throw new UnsupportedOperationException();
     }
 
-    public void linkToPrevLayer(Set<? extends Neuron> layer) {
+    public void linkToPrevLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer) {
         for (Neuron neuron : layer)
-            addPrev(neuron);
+            addPrev(neuron, weightInitializer);
     }
 
-    public void addPrev(Neuron prev) {
-        prevNeurons.add(new Link(prev, this));
+    public void addPrev(Neuron prev, WeightInitializer weightInitializer) {
+        prevNeurons.add(new Link(prev, this, weightInitializer));
     }
 
-    protected double computeDelta(double singleTargetOutput) {
+    public double computeDelta(double singleTargetOutput) {
         double currentNet = NeuralNetwork.netsCache.get(this);
         double output = computeOutput(currentNet);
         return (output - singleTargetOutput) * activationFunction.getDerivative(currentNet);

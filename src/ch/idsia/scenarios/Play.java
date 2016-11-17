@@ -2,16 +2,11 @@ package ch.idsia.scenarios;
 
 import ch.idsia.ai.agents.Agent;
 import ch.idsia.ai.agents.AgentsPool;
-import ch.idsia.ai.agents.human.HumanKeyboardAgent;
 import ch.idsia.ai.tasks.ProgressTask;
 import ch.idsia.ai.tasks.Task;
-import ch.idsia.mario.engine.sprites.Mario;
-import ch.idsia.mario.environments.Environment;
 import ch.idsia.tools.CmdLineOptions;
 import ch.idsia.tools.EvaluationOptions;
-import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.PatternHoleRecognition;
-import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.ScoreEvaluatorAgent;
-import competition.cig.sergeykarakovskiy.SergeyKarakovskiy_JumpingAgent;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.ScoreEvaluatorAgent;
 
 /**
  * Created by IntelliJ IDEA.
@@ -21,33 +16,30 @@ import competition.cig.sergeykarakovskiy.SergeyKarakovskiy_JumpingAgent;
  */
 public class Play {
 
-    public static void main(String[] args)
-    {
-      Agent controller = new ScoreEvaluatorAgent();//HumanKeyboardAgent();//
-      //Agent controller = new HumanKeyboardAgent();//
-  
-      for(int i=0 ; i<100000000; i++)
-      {
-        if (args.length > 0)
-        {
-          controller = AgentsPool.load(args[0]);
-          AgentsPool.addAgent(controller);
+    public static void main(String[] args) {
+        Agent controller = new ScoreEvaluatorAgent();
+        //Agent controller = new HumanKeyboardAgent();
+
+        for (int i = 0; i < 100000000; i++) {
+            if (args.length > 0) {
+                controller = AgentsPool.load(args[0]);
+                AgentsPool.addAgent(controller);
+            }
+            EvaluationOptions options = new CmdLineOptions(new String[0]);
+            options.setAgent(controller);
+            Task task = new ProgressTask(options);
+            options.setMaxFPS(true);
+            options.setVisualization(true);
+            options.setNumberOfTrials(1);
+            options.setMatlabFileName("");
+            //options.setLevelRandSeed((int) 0);//(Math.random() * Integer.MAX_VALUE));
+            //options.setLevelDifficulty(0);
+            options.setLevelRandSeed((int) 1);//(Math.random() * Integer.MAX_VALUE));
+            options.setLevelDifficulty(0);
+            task.setOptions(options);
+            System.out.println("Score: " + task.evaluate(controller)[0]);
+            ((ScoreEvaluatorAgent) controller).saveAI();
+            ((ScoreEvaluatorAgent) controller).resetMarioValues();
         }
-        EvaluationOptions options = new CmdLineOptions(new String[0]);
-        options.setAgent(controller);
-        Task task = new ProgressTask(options);
-        options.setMaxFPS(true);
-        options.setVisualization(true);
-        options.setNumberOfTrials(1);
-        options.setMatlabFileName("");
-        //options.setLevelRandSeed((int) 0);//(Math.random() * Integer.MAX_VALUE));
-        //options.setLevelDifficulty(0);
-        options.setLevelRandSeed((int) 1);//(Math.random() * Integer.MAX_VALUE));
-        options.setLevelDifficulty(0);
-        task.setOptions(options);
-        System.out.println("Score: " + task.evaluate(controller)[0]);
-        ((ScoreEvaluatorAgent) controller).saveAI();
-        ((ScoreEvaluatorAgent) controller).resetMarioValues();
-      }
     }
 }

@@ -1,8 +1,4 @@
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent;
-
-import ch.idsia.mario.engine.sprites.Mario;
-
-import java.util.Arrays;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent;
 
 public class QState
 {

@@ -1,8 +1,9 @@
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
+
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -12,10 +13,10 @@ public abstract class Neuron implements Serializable {
     protected ActivationFunction activationFunction;
     
     public abstract void forwardPass();
-    public abstract void addPrev(Neuron prev);
-    public abstract void addNext(Neuron next);
-    public abstract void linkToNextLayer(Set<? extends Neuron> layer);
-    public abstract void linkToPrevLayer(Set<? extends Neuron> layer);
+    public abstract void addPrev(Neuron prev, WeightInitializer weightInitializer);
+    public abstract void addNext(Neuron next, WeightInitializer weightInitializer);
+    public abstract void linkToNextLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer);
+    public abstract void linkToPrevLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer);
     public abstract Set<Link> getPrevNeurons();
     public abstract Set<Link> getNextNeurons();
 
@@ -49,6 +50,10 @@ public abstract class Neuron implements Serializable {
 
     protected void setActivationFunction(ActivationFunction activationFunction) {
         this.activationFunction = activationFunction;
+    }
+
+    public void setBias(double bias) {
+        this.bias = bias;
     }
 
     public boolean equals(Object o) {

@@ -1,4 +1,4 @@
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent;
 
 import ch.idsia.ai.agents.Agent;
 import ch.idsia.mario.engine.LevelScene;
@@ -6,9 +6,8 @@ import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.mario.environments.Environment;
 
 import java.util.LinkedList;
-import java.util.List;
 
-import static competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.PatternHoleRecognition.*;
+import static competition.cig.desimonenotarangelo.scoreevaluatoragent.PatternHoleRecognition.*;
 
 public class ScoreEvaluatorAgent implements Agent {
     

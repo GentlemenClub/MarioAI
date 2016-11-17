@@ -10,7 +10,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.PatternHoleRecognition.*;
+import static competition.cig.desimonenotarangelo.scoreevaluatoragent.PatternHoleRecognition.*;
 
 /**
  * Created by IntelliJ IDEA.

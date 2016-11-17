@@ -1,5 +1,7 @@
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
+
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -8,12 +10,16 @@ import java.util.Map;
 public class Link implements Serializable {
     private final Neuron prev, next;
     public static final Map<Link, Double> weights = new HashMap<Link, Double>();
-    
+
+    public Link(Neuron in, Neuron out) {
+        this.prev = in;
+        this.next = out;
+    }
+
     public Link(Neuron in, Neuron out, WeightInitializer weightInitializer) {
         this.prev = in;
         this.next = out;
-        if (!weights.containsKey(this))//if the key exists, don't overwrite the value
-          weights.put(this, weightInitializer.getWeight());
+        setWeight(weightInitializer.getWeight());
     }
 
     public Neuron getPrev() { return prev; }
@@ -26,8 +32,10 @@ public class Link implements Serializable {
         return weights.get(this);
     }
 
+    //if the key exists, don't overwrite the value
     public void setWeight(double weight) {
-        weights.put(this, weight);
+        if (!weights.containsKey(this))
+            weights.put(this, weight);
     }
     
     public void updateWeight(double deltaWeight) {

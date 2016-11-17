@@ -1,7 +1,10 @@
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 
 //BEST LINK EVER: https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
+
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -31,22 +34,22 @@ public class HiddenNeuron extends Neuron {
         }
     }
 
-    public void addPrev(Neuron prev) {
-        prevNeurons.add(new Link(prev, this));
+    public void addPrev(Neuron prev, WeightInitializer weightInitializer) {
+        prevNeurons.add(new Link(prev, this, weightInitializer));
     }
 
-    public void addNext(Neuron next) {
-        nextNeurons.add(new Link(this, next));
+    public void addNext(Neuron next, WeightInitializer weightInitializer) {
+        nextNeurons.add(new Link(this, next, weightInitializer));
     }
 
-    public void linkToNextLayer(Set<? extends Neuron> layer) {
+    public void linkToNextLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer) {
         for (Neuron neuron : layer)
-            addNext(neuron);
+            addNext(neuron, weightInitializer);
     }
 
-    public void linkToPrevLayer(Set<? extends Neuron> layer) {
+    public void linkToPrevLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer) {
         for (Neuron neuron : layer)
-            addPrev(neuron);
+            addPrev(neuron, weightInitializer);
     }
 
     protected double computeDelta() {

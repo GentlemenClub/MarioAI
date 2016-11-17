@@ -1,4 +1,4 @@
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.NeuralNetwork;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions;
 
 public class SigmoidFunction implements ActivationFunction{
     @Override

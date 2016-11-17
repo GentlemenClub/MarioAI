@@ -1,4 +1,4 @@
-package competition.cig.desimonenotarangelo.ScoreEvaluatorAgent;
+package competition.cig.desimonenotarangelo.scoreevaluatoragent;
 
 public class SpritesMap
 {
