@@ -10,7 +10,7 @@ public class Learner
   private NeuralNetwork network;
   private double epsilon;
   private NeuralNetworkOutput lastNNOutput = null;
-  private double alfa = 0.7, gamma = 0.6;
+  private double alfa = 0.2, gamma = 0.8;
   private String nnFileName = "MarioAI.ai";
   private final static int nActions=32;
   private final static int nButtons=5;
@@ -22,7 +22,7 @@ public class Learner
       network = new NeuralNetwork(nnFileName);
     } catch (IOException | ClassNotFoundException e) {
       ActivationFunction activationFunction = new BentIdentity();//SigmoidFunction();//
-      //ActivationFunction inputActivationFunction = new SigmoidFunction();//
+      //ActivationFunction activationFunction = new ReLU();
   
       ActionIterator iterator = new ActionIterator();
       String[] ids = new String[nActions];
@@ -46,12 +46,11 @@ public class Learner
               .setInputLayerActivationFunction(activationFunction)
               .setHiddenLayersActivationFunction(activationFunction)
               .setOutputLayerActivationFunction(activationFunction)
-              .addInputLayer(81)// Environment 9x9
-              .addHiddenLayer(30)
-              .addHiddenLayer(15)
-              .addHiddenLayer(10)
+              .addInputLayer(22*22)// Environment
+              .addHiddenLayer(200)
+              .addHiddenLayer(100)
               .addOutputLayer(ids)
-              .setEta(0.000000002)
+              .setEta(0.0000000002)
               .build();
       System.out.println("Creating new neural network");
     }
@@ -138,18 +137,19 @@ public class Learner
   {
     List<Double> inputAsList;
     
-    NNInput(QState state)
+    NNInput(List<QState> environmentHistory)
     {
-      double[][] observation = state.getObservation();
-      int totalInputSize = observation.length*observation.length;
-      
       //inputAsList contains all neural network inputs mapped into a single list
-      inputAsList = new ArrayList<Double>(totalInputSize);
+      inputAsList = new ArrayList<Double>();
       
-      //Environment input
-      for(int i=0;i<observation.length;i++)
-        for(int j=0;j<observation.length;j++)
-          inputAsList.add(observation[i][j]);
+      for(QState s: environmentHistory)
+      {
+        double[][] observation = s.getObservation();
+        //Environment input
+        for (int i = 0; i < observation.length; i++)
+          for (int j = 0; j < observation.length; j++)
+            inputAsList.add(observation[i][j]);
+      }
     }
     
     public List<Double> getInputList() { return inputAsList; }
@@ -171,7 +171,7 @@ public class Learner
     }
   }*/
   
-  public boolean[] getAction(QState state)
+  public boolean[] getAction(List<QState> environmentHistory)
   {
     double rand = Math.random();
     boolean[] chosenAction;
@@ -179,13 +179,13 @@ public class Learner
     //Exploration
     if (rand < epsilon)
     {
-      chosenAction = getRandomAction(state);
+      chosenAction = getRandomAction(environmentHistory);
       System.out.println("Exploration");
     }
     //Exploitation
     else
     {
-      chosenAction = getBestAction(state);
+      chosenAction = getBestAction(environmentHistory);
       System.out.println("Exploitation");
     }
     
@@ -206,7 +206,7 @@ public class Learner
     return chosenAction;
   }
   
-  private boolean[] getRandomAction(QState state)
+  private boolean[] getRandomAction(List<QState> environmentHistory)
   {
     boolean[] randomAction = new boolean[nButtons];
     Random random = new Random();
@@ -214,7 +214,7 @@ public class Learner
     for(int i=0; i< nButtons; i++)
       randomAction[i] = random.nextBoolean();
     
-    NNInput nnInput = new NNInput(state);
+    NNInput nnInput = new NNInput(environmentHistory);
     lastNNOutput = network.forwardPropagation(nnInput);//Needed for backpropagation
     
     return randomAction;
@@ -229,14 +229,14 @@ public class Learner
     return action;
   }
   
-  public boolean[] getBestAction(QState state)
+  public boolean[] getBestAction(List<QState> environmentHistory)
   {
     ActionIterator iterator = new ActionIterator();
     boolean[] currAction;
     double maxQvalue = Double.NEGATIVE_INFINITY;
     boolean[] chosenAction = null;//As long as maxQValue is negative infinity, this variable is always assigned
   
-    NNInput nnInput = new NNInput(state);
+    NNInput nnInput = new NNInput(environmentHistory);
     NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
     OutputNeuron maxQValueNeuron = nnOutput.getMaxValueNeuron();
     
@@ -278,20 +278,28 @@ public class Learner
     System.out.println();
   }
   
-  public void learn(QState nextState, double nextStateReward)
+  public void learn(List<QState> environmentHistory, double nextStateReward)
   {
     //double qValueStAt = lastNNOutput.getValue(lastChosenActionNeuron);
     double qValueSt_nextAt_next;
 
     Map<OutputNeuron,Double> targetOutputs = new HashMap<OutputNeuron,Double>(lastNNOutput.getFinalOutputs());
   
-    NNInput nextStateNNInput = new NNInput(nextState);
+    NNInput nextStateNNInput = new NNInput(environmentHistory);
     NeuralNetworkOutput nnOutput = network.forwardPropagation(nextStateNNInput);
     OutputNeuron nextStateMaxValueNeuron = nnOutput.getMaxValueNeuron();
-    qValueSt_nextAt_next = nextStateReward + gamma * nnOutput.getValue(nextStateMaxValueNeuron);
-    
-    //qValueStAt = qValueStAt + alfa *(nextStateReward + gamma * qValueSt_nextAt_next - qValueStAt);
-    
+    qValueSt_nextAt_next = nextStateReward + gamma * nnOutput.getValue(nextStateMaxValueNeuron);//Q-LEARNING
+  
+    //SARSA, choosing next action using policy
+    /*double value;
+    double rand = Math.random();
+    if(rand<epsilon)
+      value = nnOutput.getRandomValue();
+    else
+      value = nnOutput.getValue(nextStateMaxValueNeuron);
+  
+    qValueSt_nextAt_next = nextStateReward + gamma * value;
+  */
     targetOutputs.put(lastChosenActionNeuron,qValueSt_nextAt_next);
     
     network.backPropagation(lastNNOutput,targetOutputs);

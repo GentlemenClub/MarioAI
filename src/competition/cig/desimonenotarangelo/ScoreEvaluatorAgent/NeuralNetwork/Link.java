@@ -9,12 +9,11 @@ public class Link implements Serializable {
     private final Neuron prev, next;
     public static final Map<Link, Double> weights = new HashMap<Link, Double>();
     
-    public Link(Neuron in, Neuron out) {
+    public Link(Neuron in, Neuron out, WeightInitializer weightInitializer) {
         this.prev = in;
         this.next = out;
         if (!weights.containsKey(this))//if the key exists, don't overwrite the value
-          weights.put(this, Math.random());
-          //weights.put(this,0.0);
+          weights.put(this, weightInitializer.getWeight());
     }
 
     public Neuron getPrev() { return prev; }

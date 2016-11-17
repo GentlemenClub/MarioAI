@@ -26,7 +26,7 @@ public class Play {
       Agent controller = new ScoreEvaluatorAgent();//HumanKeyboardAgent();//
       //Agent controller = new HumanKeyboardAgent();//
   
-      for(int i=0 ; i<1000000; i++)
+      for(int i=0 ; i<100000000; i++)
       {
         if (args.length > 0)
         {
@@ -40,8 +40,10 @@ public class Play {
         options.setVisualization(true);
         options.setNumberOfTrials(1);
         options.setMatlabFileName("");
-        options.setLevelRandSeed((int) 3);//(Math.random() * Integer.MAX_VALUE));
-        options.setLevelDifficulty(1);
+        //options.setLevelRandSeed((int) 0);//(Math.random() * Integer.MAX_VALUE));
+        //options.setLevelDifficulty(0);
+        options.setLevelRandSeed((int) 1);//(Math.random() * Integer.MAX_VALUE));
+        options.setLevelDifficulty(0);
         task.setOptions(options);
         System.out.println("Score: " + task.evaluate(controller)[0]);
         ((ScoreEvaluatorAgent) controller).saveAI();

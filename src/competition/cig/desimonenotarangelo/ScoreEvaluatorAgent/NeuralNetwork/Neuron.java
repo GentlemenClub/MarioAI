@@ -10,7 +10,7 @@ public abstract class Neuron implements Serializable {
     protected double bias;
     private final String id;
     protected ActivationFunction activationFunction;
-
+    
     public abstract void forwardPass();
     public abstract void addPrev(Neuron prev);
     public abstract void addNext(Neuron next);
