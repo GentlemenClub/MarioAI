@@ -24,10 +24,11 @@ public class NeuralNetwork implements Serializable {
     protected static final Map<Neuron, Double> deltasCache = new HashMap<Neuron, Double>();
     protected static final Map<Neuron, Double> netsCache = new HashMap<Neuron, Double>();
     protected static final Map<Neuron, Double> finalOutputsCache = new HashMap<Neuron, Double>();
+    protected static final Map<Neuron, Double> deltaBiasesCache = new HashMap<Neuron, Double>();
     protected static final Map<Link, Double> deltaWeightsCache = new HashMap<Link, Double>();
     protected static final Set<Neuron> dropoutMaskCache = new HashSet<Neuron>();
-    
-    public NeuralNetwork(int inputLayerDim, int hiddenLayerDim) {
+  
+  public NeuralNetwork(int inputLayerDim, int hiddenLayerDim) {
         //forcing only one output
         this(inputLayerDim, hiddenLayerDim, 1);
     }
@@ -46,8 +47,8 @@ public class NeuralNetwork implements Serializable {
         this.inputLayer = neuralNetworkBuilder.getInputLayer();
         this.hiddenLayers = neuralNetworkBuilder.getHiddenLayers();
         this.outputLayer = neuralNetworkBuilder.getOutputLayer();
-        this.hiddenBias = neuralNetworkBuilder.getHiddenBias();
-        this.outputBias = neuralNetworkBuilder.getOutputBias();
+        this.hiddenBias = neuralNetworkBuilder.getDefaultHiddenBias();
+        this.outputBias = neuralNetworkBuilder.getDefaultOutputBias();
         this.eta = neuralNetworkBuilder.getEta();
         this.dropoutPercentage = neuralNetworkBuilder.getDropoutPercentage();
     }
@@ -148,27 +149,33 @@ public class NeuralNetwork implements Serializable {
         System.out.println("Neural network loaded from " + fileName);
     }
 
-    public void saveOutputLayerDeltaWeights(Map<OutputNeuron, Double> targetOutput) {
+    public void saveOutputLayerDeltaWeightsAndBiases(Map<OutputNeuron, Double> targetOutput) {
 
         //Calculates deltaWeigths for each node in the output layer
         for (OutputNeuron n : outputLayer) {
             double singleTargetOutput = targetOutput.get(n);
             double singleDelta = n.computeDelta(singleTargetOutput);
             deltasCache.put(n, singleDelta);
+            
+            double deltaBias = (-eta) *singleDelta;
+            deltaBiasesCache.put(n,deltaBias);
 
             for (Link l : n.getPrevNeurons()) {
                 Neuron prev = l.getPrev();
-                double deltaWeight = (-eta) * singleDelta * prev.computeOutput(netsCache.get(prev));
-                deltaWeightsCache.put(l, deltaWeight);
+              double deltaWeight = deltaBias * prev.computeOutput(netsCache.get(prev));
+              deltaWeightsCache.put(l, deltaWeight);
             }
         }
     }
 
-    public void saveHiddenLayerDeltaWeights(Set<HiddenNeuron> currHiddenLayer) {
+    public void saveHiddenLayerDeltaWeightsandBiases(Set<HiddenNeuron> currHiddenLayer) {
         //Calculates deltaWeigths for each node in the hidden layer
         for (HiddenNeuron n : currHiddenLayer) {
             deltasCache.put(n, n.computeDelta());
-            for (Link l : n.getPrevNeurons()) {
+            double deltaBias = (-eta) *n.computeDelta();
+            deltaBiasesCache.put(n,deltaBias);
+  
+          for (Link l : n.getPrevNeurons()) {
                 Neuron prev = l.getPrev();
                 double deltaWeight = (-eta) * deltasCache.get(n) * prev.computeOutput(netsCache.get(prev));
                 deltaWeightsCache.put(l, deltaWeight);
@@ -192,20 +199,27 @@ public class NeuralNetwork implements Serializable {
         System.out.println("-----------------------------");
         */
 
-        saveOutputLayerDeltaWeights(targetOutput);
+        saveOutputLayerDeltaWeightsAndBiases(targetOutput);
         for (int i = hiddenLayers.size() - 1; i >= 0; i--) {
             Set<HiddenNeuron> hiddenLayer = hiddenLayers.get(i);
-            saveHiddenLayerDeltaWeights(hiddenLayer);
+            saveHiddenLayerDeltaWeightsandBiases(hiddenLayer);
         }
 
         for (Link l : deltaWeightsCache.keySet())
             l.updateWeight(deltaWeightsCache.get(l));
-
+         
+        for(Neuron n: deltaBiasesCache.keySet())
+        {
+          double deltaBias = deltaBiasesCache.get(n);
+          n.updateBias(deltaBias);
+        }
+        
         cleanCacheAfterBackwardPropagation();
     }
-
+    
     private void cleanCacheAfterBackwardPropagation() {
         deltasCache.clear();
+        deltaBiasesCache.clear();
         netsCache.clear();
         deltaWeightsCache.clear();
     }
@@ -252,8 +266,12 @@ public class NeuralNetwork implements Serializable {
         Map<OutputNeuron, Double> finalOutputs = new HashMap<OutputNeuron, Double>();
         Map<Neuron, Double> nets = new HashMap<Neuron, Double>();
         Set<Neuron> finalDropoutMask = new HashSet<Neuron>();
-        
-        for (Neuron n : inputLayer) {
+  
+      deltasCache.clear();
+      deltaBiasesCache.clear();
+      deltaWeightsCache.clear();
+      
+      for (Neuron n : inputLayer) {
             nets.put(n, netsCache.get(n));
             netsCache.remove(n);
         }
@@ -273,9 +291,8 @@ public class NeuralNetwork implements Serializable {
             finalOutputs.put(n, finalOutputsCache.get(n));
             finalOutputsCache.remove(n);
             netsCache.remove(n);
-    
         }
-        
+  
         return new NeuralNetworkOutput(finalOutputs, nets, finalDropoutMask);
     }
 

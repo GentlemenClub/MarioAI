@@ -1,8 +1,6 @@
 package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 
-//BEST LINK EVER: https://mattmazur.com/2015/03/17/a-step-by-step-backpropagation-example/
-
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
 
@@ -26,6 +24,7 @@ public class HiddenNeuron extends Neuron {
         for (Link link : nextNeurons) {
             Neuron currNext = link.getNext();
             Double nextNet = nets.get(currNext);
+            
             //If it is the first time you add net to the neuron, the net must be initialized to 0
             if (nextNet == null)
                 nextNet = 0.0;

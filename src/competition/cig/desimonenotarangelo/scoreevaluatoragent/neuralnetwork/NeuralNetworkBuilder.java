@@ -2,8 +2,6 @@ package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.BentIdentity;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.HiddenNeuron;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.Neuron;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.RandomWeightInitializer;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.XavierWeightInitializer;
@@ -20,12 +18,11 @@ public class NeuralNetworkBuilder {
     private ActivationFunction outputLayerActivationFunction;
     
     private double dropoutPercentage = 0.0;
-    
-    
-    private double hiddenBias = 0.35,
-            outputBias = 0.60,
+  
+    private double defaultHiddenBias = 0.1,
+            defaultOutputBias = 0.1,
             eta = 0.0002;
-
+  
     public NeuralNetworkBuilder() {
         inputLayer = new LinkedHashSet<InputNeuron>();
         hiddenLayers = new ArrayList<Set<HiddenNeuron>>();
@@ -53,7 +50,7 @@ public class NeuralNetworkBuilder {
 
         for (int i = 0; i < inputLayerDim; i++)
             inputLayer.add(new InputNeuron(1, inputLayerActivationFunction));
-
+      
         return this;
     }
 
@@ -72,7 +69,7 @@ public class NeuralNetworkBuilder {
 
         Set<HiddenNeuron> hiddenLayer = new LinkedHashSet<HiddenNeuron>(hiddenLayerDim);
         for (int i = 0; i < hiddenLayerDim; i++) {
-            HiddenNeuron hiddenNeuron = new HiddenNeuron(hiddenBias, hiddenLayersActivationFunction);
+            HiddenNeuron hiddenNeuron = new HiddenNeuron(defaultHiddenBias, hiddenLayersActivationFunction);
             hiddenNeuron.linkToPrevLayer(previousLayer, weightInitializer);
             hiddenLayer.add(hiddenNeuron);
         }
@@ -103,7 +100,7 @@ public class NeuralNetworkBuilder {
         WeightInitializer weightInitializer = getWeightInitializerFromType(weightInitializerType, inputNeurons, outputNeurons);
 
         for (int i = 0; i < outputLayerDim; i++) {
-            OutputNeuron outputNeuron = new OutputNeuron(outputBias, outputLayerActivationFunction);
+            OutputNeuron outputNeuron = new OutputNeuron(defaultOutputBias, outputLayerActivationFunction);
             outputNeuron.linkToPrevLayer(lastHiddenLayer, weightInitializer);
             outputLayer.add(outputNeuron);
         }
@@ -131,7 +128,7 @@ public class NeuralNetworkBuilder {
         WeightInitializer weightInitializer = getWeightInitializerFromType(weightInitializerType, inputNeurons, outputNeurons);
 
         for (String outputID : outputIDs) {
-            OutputNeuron outputNeuron = new OutputNeuron(outputBias, outputLayerActivationFunction, outputID);
+            OutputNeuron outputNeuron = new OutputNeuron(defaultOutputBias, outputLayerActivationFunction, outputID);
             outputNeuron.linkToPrevLayer(lastHiddenLayer, weightInitializer);
             outputLayer.add(outputNeuron);
         }
@@ -180,7 +177,7 @@ public class NeuralNetworkBuilder {
     }
 
     public NeuralNetworkBuilder setHiddenLayersBias(double hiddenLayerBias) {
-        hiddenBias = hiddenLayerBias;
+        defaultHiddenBias = hiddenLayerBias;
         for (Set<HiddenNeuron> hiddenLayer : hiddenLayers)
             for (HiddenNeuron hiddenNeuron : hiddenLayer)
                 hiddenNeuron.setBias(hiddenLayerBias);
@@ -189,7 +186,7 @@ public class NeuralNetworkBuilder {
     }
 
     public NeuralNetworkBuilder setOutputLayerBias(double outputLayerBias) {
-        outputBias = outputLayerBias;
+        defaultOutputBias = outputLayerBias;
         for (OutputNeuron outputNeuron : outputLayer)
             outputNeuron.setBias(outputLayerBias);
 
@@ -226,12 +223,12 @@ public class NeuralNetworkBuilder {
         return outputLayerActivationFunction;
     }
 
-    public double getHiddenBias() {
-        return hiddenBias;
+    public double getDefaultHiddenBias() {
+        return defaultHiddenBias;
     }
 
-    public double getOutputBias() {
-        return outputBias;
+    public double getDefaultOutputBias() {
+        return defaultOutputBias;
     }
 
     public double getEta() {

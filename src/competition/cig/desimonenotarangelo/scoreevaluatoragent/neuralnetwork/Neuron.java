@@ -44,8 +44,6 @@ public abstract class Neuron implements Serializable {
     protected double computeOutput(double currentNet) {
         double biasedNet = currentNet + bias;
         return activationFunction.getFunction(biasedNet);
-        //return (Math.sqrt(biasedNet * biasedNet + 1) - 1) * 0.5 + biasedNet;//Bent Identity
-        //OLD SIGMOID output = 1/(1+Math.exp(-biasedNet)); sigmoid function to output
     }
 
     protected void setActivationFunction(ActivationFunction activationFunction) {
@@ -55,7 +53,10 @@ public abstract class Neuron implements Serializable {
     public void setBias(double bias) {
         this.bias = bias;
     }
-
+    public double getBias() { return bias; }
+    
+    public void updateBias(double deltaBias) { bias+=deltaBias; }
+    
     public boolean equals(Object o) {
         if (o instanceof Neuron) {
             Neuron n = (Neuron) o;
