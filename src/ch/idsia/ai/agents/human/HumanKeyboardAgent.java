@@ -3,7 +3,6 @@ package ch.idsia.ai.agents.human;
 import ch.idsia.ai.agents.Agent;
 import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.mario.environments.Environment;
-import competition.cig.desimonenotarangelo.ScoreEvaluatorAgent.PatternHoleRecognition;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;

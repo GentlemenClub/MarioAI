@@ -18,7 +18,10 @@ public class NeuralNetworkBuilder {
     private ActivationFunction inputLayerActivationFunction;
     private ActivationFunction hiddenLayersActivationFunction;
     private ActivationFunction outputLayerActivationFunction;
-
+    
+    private double dropoutPercentage = 0.0;
+    
+    
     private double hiddenBias = 0.35,
             outputBias = 0.60,
             eta = 0.0002;
@@ -31,7 +34,19 @@ public class NeuralNetworkBuilder {
         hiddenLayersActivationFunction = new BentIdentity();
         outputLayerActivationFunction = new BentIdentity();
     }
-
+    
+    public NeuralNetworkBuilder setDropoutPercentage(double percentage)
+    {
+        if(percentage<0 || percentage >1)
+            throw new IllegalArgumentException("Input must be between 0 and 1");
+        dropoutPercentage = percentage;
+        
+        return this;
+    }
+    
+    public double getDropoutPercentage()
+    { return dropoutPercentage; }
+    
     public NeuralNetworkBuilder addInputLayer(int inputLayerDim) {
         if (!inputLayer.isEmpty())
             throw new IllegalStateException("Input Layer already added");

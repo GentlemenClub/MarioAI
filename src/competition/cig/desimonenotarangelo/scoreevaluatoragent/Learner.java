@@ -13,7 +13,7 @@ public class Learner {
     private NeuralNetwork network;
     private double epsilon;
     private NeuralNetworkOutput lastNNOutput = null;
-    private double alfa = 0.2, gamma = 0.8;
+    private double gamma = 0.8;
     private String nnFileName = "MarioAI.ai";
     private final static int nActions = 32;
     private final static int nButtons = 5;
@@ -47,11 +47,12 @@ public class Learner {
                     .setInputLayerActivationFunction(activationFunction)
                     .setHiddenLayersActivationFunction(activationFunction)
                     .setOutputLayerActivationFunction(activationFunction)
-                    .addInputLayer(22 * 22)// Environment
+                    .addInputLayer(22 * 22 + 1)// Environment
                     .addHiddenLayer(WeightInitializer.Type.XAVIER, 200)
                     .addHiddenLayer(WeightInitializer.Type.XAVIER, 100)
                     .addOutputLayer(WeightInitializer.Type.XAVIER, ids)
-                    .setEta(0.0000000002)
+                    .setDropoutPercentage(0.5)
+                    .setEta(0.0002)
                     .build();
             System.out.println("Creating new neural network");
         }
@@ -105,6 +106,7 @@ public class Learner {
                 for (int i = 0; i < observation.length; i++)
                     for (int j = 0; j < observation.length; j++)
                         inputAsList.add(observation[i][j]);
+                inputAsList.add(s.getMarioMode());
             }
         }
 

@@ -6,8 +6,6 @@ package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.BentIdentity;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.HiddenNeuron;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.Neuron;
 
 import java.io.*;
 import java.util.*;
@@ -15,18 +13,20 @@ import java.util.*;
 public class NeuralNetwork implements Serializable {
     private double hiddenBias = 0.35,
             outputBias = 0.60,
-            eta = 0.0002;
+            eta = 0.0002,
+            dropoutPercentage = 0;
 
     private Set<InputNeuron> inputLayer;
     private List<Set<HiddenNeuron>> hiddenLayers;
     private Set<OutputNeuron> outputLayer;
-
+    
     //Structures used for caching values during forward and backward propagation
     protected static final Map<Neuron, Double> deltasCache = new HashMap<Neuron, Double>();
     protected static final Map<Neuron, Double> netsCache = new HashMap<Neuron, Double>();
     protected static final Map<Neuron, Double> finalOutputsCache = new HashMap<Neuron, Double>();
     protected static final Map<Link, Double> deltaWeightsCache = new HashMap<Link, Double>();
-
+    protected static final Set<Neuron> dropoutMaskCache = new HashSet<Neuron>();
+    
     public NeuralNetwork(int inputLayerDim, int hiddenLayerDim) {
         //forcing only one output
         this(inputLayerDim, hiddenLayerDim, 1);
@@ -49,6 +49,7 @@ public class NeuralNetwork implements Serializable {
         this.hiddenBias = neuralNetworkBuilder.getHiddenBias();
         this.outputBias = neuralNetworkBuilder.getOutputBias();
         this.eta = neuralNetworkBuilder.getEta();
+        this.dropoutPercentage = neuralNetworkBuilder.getDropoutPercentage();
     }
 
     public void saveNeuralNetwork(String fileName) {
@@ -182,7 +183,7 @@ public class NeuralNetwork implements Serializable {
         //Copies Values from input into the cache
         finalOutputsCache.putAll(nnOutput.getFinalOutputs());
         netsCache.putAll(nnOutput.getNets());
-        
+        dropoutMaskCache.addAll(nnOutput.getDropoutMask());
         /*for(OutputNeuron n : targetOutput.keySet())
             System.out.println("Target OutPut: " + targetOutput.get(n));
         
@@ -236,13 +237,22 @@ public class NeuralNetwork implements Serializable {
 
     private void forwardLayerPass(Set<? extends Neuron> layer) {
         for (Neuron n : layer)
-            n.forwardPass();
+        {
+            double probability = Math.random();
+            if(probability<dropoutPercentage
+                    && n instanceof HiddenNeuron
+                    && dropoutMaskCache.size() < layer.size() )
+                dropoutMaskCache.add(n);
+            else
+              n.forwardPass();
+        }
     }
 
     public NeuralNetworkOutput getOutputAndClean() {
         Map<OutputNeuron, Double> finalOutputs = new HashMap<OutputNeuron, Double>();
         Map<Neuron, Double> nets = new HashMap<Neuron, Double>();
-
+        Set<Neuron> finalDropoutMask = new HashSet<Neuron>();
+        
         for (Neuron n : inputLayer) {
             nets.put(n, netsCache.get(n));
             netsCache.remove(n);
@@ -252,17 +262,21 @@ public class NeuralNetwork implements Serializable {
             for (Neuron n : hiddenLayer) {
                 nets.put(n, netsCache.get(n));
                 netsCache.remove(n);
+                if(dropoutMaskCache.contains(n))
+                  finalDropoutMask.add(n);
+                dropoutMaskCache.remove(n);
             }
         }
 
         for (OutputNeuron n : outputLayer) {
             nets.put(n, netsCache.get(n));
             finalOutputs.put(n, finalOutputsCache.get(n));
-            netsCache.remove(n);
             finalOutputsCache.remove(n);
+            netsCache.remove(n);
+    
         }
-
-        return new NeuralNetworkOutput(finalOutputs, nets);
+        
+        return new NeuralNetworkOutput(finalOutputs, nets, finalDropoutMask);
     }
 
     public Set<InputNeuron> getInputLayer() {

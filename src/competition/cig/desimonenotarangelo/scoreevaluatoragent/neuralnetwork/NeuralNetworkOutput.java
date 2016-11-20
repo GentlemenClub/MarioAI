@@ -6,10 +6,15 @@ import java.util.*;
 public class NeuralNetworkOutput {
     private final Map<OutputNeuron, Double> finalOutputs;
     private final Map<Neuron, Double> nets;
-
-    public NeuralNetworkOutput(Map<OutputNeuron, Double> outputs, Map<Neuron, Double> nets) {
+    private final Set<Neuron> dropoutMask;
+    
+    public NeuralNetworkOutput(Map<OutputNeuron, Double> outputs,
+                               Map<Neuron, Double> nets,
+                               Set<Neuron> dropoutMask)
+    {
         this.finalOutputs = outputs;
         this.nets = nets;
+        this.dropoutMask = dropoutMask;
     }
 
     //Returns net for each node in the network
@@ -21,7 +26,12 @@ public class NeuralNetworkOutput {
     public Map<OutputNeuron, Double> getFinalOutputs() {
         return finalOutputs;
     }
-
+    
+    //Returns all nodes that were not used in the forward pass
+    public Set<Neuron> getDropoutMask() {
+        return dropoutMask;
+    }
+    
     public OutputNeuron getMaxValueNeuron() {
         double currMax = Double.NEGATIVE_INFINITY;
         OutputNeuron maxValueNeuron = null;
@@ -41,11 +51,7 @@ public class NeuralNetworkOutput {
         int randomIndex = new Random().nextInt(valuesList.size());
         return valuesList.get(randomIndex);
     }
-
-    public Map<OutputNeuron, Double> getFinalOutputs(OutputNeuron n) {
-        return finalOutputs;
-    }
-
+    
     public double getValue(OutputNeuron n) {
         return finalOutputs.get(n);
     }

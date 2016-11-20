@@ -43,15 +43,19 @@ public class ScoreEvaluatorAgent implements Agent {
     
     private void updateHistory(Environment observation)
     {
+        double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
+                0, 2,
+                0, 1);
+        
         if(stateHistory.size()==historySize)
         {
           stateHistory.removeFirst();
-          stateHistory.addLast(new QState(getSubObservation(observation)));
+          stateHistory.addLast(new QState(getSubObservation(observation),normalizedMarioMode));
         }
         else//First time only
         {
             for(int i=0; i<historySize; i++)
-              stateHistory.addLast(new QState(getSubObservation(observation)));
+              stateHistory.addLast(new QState(getSubObservation(observation),normalizedMarioMode));
         }
     }
     
