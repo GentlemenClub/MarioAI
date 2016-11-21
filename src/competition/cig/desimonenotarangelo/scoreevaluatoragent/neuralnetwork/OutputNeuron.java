@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class OutputNeuron extends Neuron {
-    protected final Set<Link> prevNeurons;
+    protected transient Set<Link> prevNeurons;
 
     public OutputNeuron(double bias, ActivationFunction activationFunction) {
         super(bias, activationFunction);
@@ -59,4 +59,13 @@ public class OutputNeuron extends Neuron {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void setPrevNeurons(Set<Link> prevNeurons) {
+        this.prevNeurons = prevNeurons;
+    }
+
+    @Override
+    public void setNextNeurons(Set<Link> nextNeurons) {
+        throw new UnsupportedOperationException();
+    }
 }

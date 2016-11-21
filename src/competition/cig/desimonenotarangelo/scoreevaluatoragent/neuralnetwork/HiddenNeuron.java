@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 public class HiddenNeuron extends Neuron {
-    protected final Set<Link> nextNeurons;
-    protected final Set<Link> prevNeurons;
+    protected transient Set<Link> nextNeurons;
+    protected transient Set<Link> prevNeurons;
 
     public HiddenNeuron(double bias, ActivationFunction activationFunction) {
         super(bias, activationFunction);
@@ -72,6 +72,16 @@ public class HiddenNeuron extends Neuron {
 
     public Set<Link> getNextNeurons() {
         return nextNeurons;
+    }
+
+    @Override
+    public void setPrevNeurons(Set<Link> prevNeurons) {
+        this.prevNeurons = prevNeurons;
+    }
+
+    @Override
+    public void setNextNeurons(Set<Link> nextNeurons) {
+        this.nextNeurons = nextNeurons;
     }
 
 

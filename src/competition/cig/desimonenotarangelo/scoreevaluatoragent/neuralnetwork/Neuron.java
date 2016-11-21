@@ -19,6 +19,8 @@ public abstract class Neuron implements Serializable {
     public abstract void linkToPrevLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer);
     public abstract Set<Link> getPrevNeurons();
     public abstract Set<Link> getNextNeurons();
+    public abstract void setPrevNeurons(Set<Link> prevNeurons);
+    public abstract void setNextNeurons(Set<Link> nextNeurons);
 
     public Neuron(double bias, ActivationFunction activationFunction) {
         this.bias = bias;

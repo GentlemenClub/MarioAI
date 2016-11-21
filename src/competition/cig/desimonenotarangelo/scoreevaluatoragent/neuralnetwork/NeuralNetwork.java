@@ -62,6 +62,7 @@ public class NeuralNetwork implements Serializable {
             outStream.writeDouble(hiddenBias);
             outStream.writeDouble(outputBias);
             outStream.writeDouble(eta);
+            outStream.writeDouble(dropoutPercentage);
 
             //serialize weights map
             outStream.writeInt(Link.weights.size());
@@ -74,22 +75,40 @@ public class NeuralNetwork implements Serializable {
 
             //serialize input layer
             outStream.writeInt(inputLayer.size());
-            for (InputNeuron inputNeuron : inputLayer)
+            for (InputNeuron inputNeuron : inputLayer) {
                 outStream.writeObject(inputNeuron);
-
+                Set<Link> nextNeurons = inputNeuron.getNextNeurons();
+                outStream.writeInt(nextNeurons.size());
+                for (Link link : nextNeurons)
+                    outStream.writeObject(link);
+            }
             //serialize hidden layers
             outStream.writeInt(hiddenLayers.size());
             for (Set<HiddenNeuron> hiddenLayer : hiddenLayers) {
                 //serialize every hidden layer
                 outStream.writeInt(hiddenLayer.size());
-                for (HiddenNeuron hiddenNeuron : hiddenLayer)
+                for (HiddenNeuron hiddenNeuron : hiddenLayer) {
                     outStream.writeObject(hiddenNeuron);
+                    Set<Link> prevNeurons = hiddenNeuron.getPrevNeurons();
+                    Set<Link> nextNeurons = hiddenNeuron.getNextNeurons();
+                    outStream.writeInt(prevNeurons.size());
+                    for (Link link : prevNeurons)
+                        outStream.writeObject(link);
+                    outStream.writeInt(nextNeurons.size());
+                    for (Link link : nextNeurons)
+                        outStream.writeObject(link);
+                }
             }
 
             //serialize output layer
             outStream.writeInt(outputLayer.size());
-            for (OutputNeuron outputNeuron : outputLayer)
+            for (OutputNeuron outputNeuron : outputLayer) {
                 outStream.writeObject(outputNeuron);
+                Set<Link> prevNeurons = outputNeuron.getPrevNeurons();
+                outStream.writeInt(prevNeurons.size());
+                for (Link link : prevNeurons)
+                    outStream.writeObject(link);
+            }
 
             outStream.close();
             fileOut.close();
@@ -108,6 +127,7 @@ public class NeuralNetwork implements Serializable {
         hiddenBias = in.readDouble();
         outputBias = in.readDouble();
         eta = in.readDouble();
+        dropoutPercentage = in.readDouble();
 
         //deserialize weights map
         int weightsMapSize = in.readInt();
@@ -122,8 +142,15 @@ public class NeuralNetwork implements Serializable {
         //deserialize input layer
         int inputLayerDim = in.readInt();
         inputLayer = new LinkedHashSet<InputNeuron>(inputLayerDim);
-        for (int i = 0; i < inputLayerDim; i++)
-            inputLayer.add((InputNeuron) in.readObject());
+        for (int i = 0; i < inputLayerDim; i++) {
+            InputNeuron inputNeuron = (InputNeuron) in.readObject();
+            int nextNeuronsSize = in.readInt();
+            Set<Link> nextNeurons = new HashSet<Link>(nextNeuronsSize);
+            for (int j = 0; j < nextNeuronsSize; j++)
+                nextNeurons.add((Link) in.readObject());
+            inputNeuron.setNextNeurons(nextNeurons);
+            inputLayer.add(inputNeuron);
+        }
 
         //deserialize hidden layers
         int hiddenLayersDim = in.readInt();
@@ -132,16 +159,38 @@ public class NeuralNetwork implements Serializable {
             //deserialize hidden layer
             int hiddenLayerDim = in.readInt();
             Set<HiddenNeuron> hiddenLayer = new LinkedHashSet<HiddenNeuron>(hiddenLayerDim);
-            for (int j = 0; j < hiddenLayerDim; j++)
-                hiddenLayer.add((HiddenNeuron) in.readObject());
+            for (int j = 0; j < hiddenLayerDim; j++) {
+                HiddenNeuron hiddenNeuron = (HiddenNeuron) in.readObject();
+
+                int prevNeuronsSize = in.readInt();
+                Set<Link> prevNeurons = new HashSet<Link>(prevNeuronsSize);
+                for (int k = 0; k < prevNeuronsSize; k++)
+                    prevNeurons.add((Link) in.readObject());
+                hiddenNeuron.setPrevNeurons(prevNeurons);
+
+                int nextNeuronsSize = in.readInt();
+                Set<Link> nextNeurons = new HashSet<Link>(nextNeuronsSize);
+                for (int l = 0; l < nextNeuronsSize; l++)
+                    nextNeurons.add((Link) in.readObject());
+                hiddenNeuron.setNextNeurons(nextNeurons);
+
+                hiddenLayer.add(hiddenNeuron);
+            }
             hiddenLayers.add(hiddenLayer);
         }
 
         //deserialize output layer
         int outputLayerDim = in.readInt();
         outputLayer = new LinkedHashSet<OutputNeuron>(outputLayerDim);
-        for (int i = 0; i < outputLayerDim; i++)
-            outputLayer.add((OutputNeuron) in.readObject());
+        for (int i = 0; i < outputLayerDim; i++) {
+            OutputNeuron outputNeuron = (OutputNeuron) in.readObject();
+            int prevNeuronsSize = in.readInt();
+            Set<Link> prevNeurons = new HashSet<Link>(prevNeuronsSize);
+            for (int j = 0; j < prevNeuronsSize; j++)
+                prevNeurons.add((Link) in.readObject());
+            outputNeuron.setPrevNeurons(prevNeurons);
+            outputLayer.add(outputNeuron);
+        }
 
         in.close();
         fileIn.close();
@@ -373,8 +422,8 @@ public class NeuralNetwork implements Serializable {
                     .setHiddenLayersActivationFunction(activationFunction)
                     .setOutputLayerActivationFunction(activationFunction)
                     .addInputLayer(2)
-                    .addHiddenLayer(8)
-                    .addHiddenLayer(8)
+                    .addHiddenLayer(400)
+                    .addHiddenLayer(300)
                     .addOutputLayer(1)
                     .setEta(0.0000002)
                     .build();
@@ -385,7 +434,7 @@ public class NeuralNetwork implements Serializable {
         for (OutputNeuron n : neuralNetwork.outputLayer)
             outputNeuron = n;
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1; i++) {
             //double a = getOneOrZero();
             //double b = getOneOrZero();
 
