@@ -19,7 +19,7 @@ public class NeuralNetwork implements Serializable {
     private Set<InputNeuron> inputLayer;
     private List<Set<HiddenNeuron>> hiddenLayers;
     private Set<OutputNeuron> outputLayer;
-    
+
     //Structures used for caching values during forward and backward propagation
     protected static final Map<Neuron, Double> deltasCache = new HashMap<Neuron, Double>();
     protected static final Map<Neuron, Double> netsCache = new HashMap<Neuron, Double>();
@@ -27,8 +27,8 @@ public class NeuralNetwork implements Serializable {
     protected static final Map<Neuron, Double> deltaBiasesCache = new HashMap<Neuron, Double>();
     protected static final Map<Link, Double> deltaWeightsCache = new HashMap<Link, Double>();
     protected static final Set<Neuron> dropoutMaskCache = new HashSet<Neuron>();
-  
-  public NeuralNetwork(int inputLayerDim, int hiddenLayerDim) {
+
+    public NeuralNetwork(int inputLayerDim, int hiddenLayerDim) {
         //forcing only one output
         this(inputLayerDim, hiddenLayerDim, 1);
     }
@@ -213,14 +213,14 @@ public class NeuralNetwork implements Serializable {
             double singleTargetOutput = targetOutput.get(n);
             double singleDelta = n.computeDelta(singleTargetOutput);
             deltasCache.put(n, singleDelta);
-            
-            double deltaBias = (-eta) *singleDelta;
-            deltaBiasesCache.put(n,deltaBias);
+
+            double deltaBias = (-eta) * singleDelta;
+            deltaBiasesCache.put(n, deltaBias);
 
             for (Link l : n.getPrevNeurons()) {
                 Neuron prev = l.getPrev();
-              double deltaWeight = deltaBias * prev.computeOutput(netsCache.get(prev));
-              deltaWeightsCache.put(l, deltaWeight);
+                double deltaWeight = deltaBias * prev.computeOutput(netsCache.get(prev));
+                deltaWeightsCache.put(l, deltaWeight);
             }
         }
     }
@@ -229,10 +229,10 @@ public class NeuralNetwork implements Serializable {
         //Calculates deltaWeigths for each node in the hidden layer
         for (HiddenNeuron n : currHiddenLayer) {
             deltasCache.put(n, n.computeDelta());
-            double deltaBias = (-eta) *n.computeDelta();
-            deltaBiasesCache.put(n,deltaBias);
-  
-          for (Link l : n.getPrevNeurons()) {
+            double deltaBias = (-eta) * n.computeDelta();
+            deltaBiasesCache.put(n, deltaBias);
+
+            for (Link l : n.getPrevNeurons()) {
                 Neuron prev = l.getPrev();
                 double deltaWeight = (-eta) * deltasCache.get(n) * prev.computeOutput(netsCache.get(prev));
                 deltaWeightsCache.put(l, deltaWeight);
@@ -241,7 +241,7 @@ public class NeuralNetwork implements Serializable {
     }
 
     public void backPropagation(NeuralNetworkOutput nnOutput, Map<OutputNeuron, Double> targetOutput) {
-      
+
         //Copies Values from input into the cache
         finalOutputsCache.putAll(nnOutput.getFinalOutputs());
         netsCache.putAll(nnOutput.getNets());
@@ -262,16 +262,15 @@ public class NeuralNetwork implements Serializable {
 
         for (Link l : deltaWeightsCache.keySet())
             l.updateWeight(deltaWeightsCache.get(l));
-         
-        for(Neuron n: deltaBiasesCache.keySet())
-        {
-          double deltaBias = deltaBiasesCache.get(n);
-          n.updateBias(deltaBias);
+
+        for (Neuron n : deltaBiasesCache.keySet()) {
+            double deltaBias = deltaBiasesCache.get(n);
+            n.updateBias(deltaBias);
         }
-        
+
         cleanCacheAfterBackwardPropagation();
     }
-    
+
     private void cleanCacheAfterBackwardPropagation() {
         deltasCache.clear();
         deltaBiasesCache.clear();
@@ -305,15 +304,14 @@ public class NeuralNetwork implements Serializable {
     }
 
     private void forwardLayerPass(Set<? extends Neuron> layer) {
-        for (Neuron n : layer)
-        {
+        for (Neuron n : layer) {
             double probability = Math.random();
-            if(probability<dropoutPercentage
+            if (probability < dropoutPercentage
                     && n instanceof HiddenNeuron
-                    && dropoutMaskCache.size() < layer.size() )
+                    && dropoutMaskCache.size() < layer.size())
                 dropoutMaskCache.add(n);
             else
-              n.forwardPass();
+                n.forwardPass();
         }
     }
 
@@ -321,12 +319,12 @@ public class NeuralNetwork implements Serializable {
         Map<OutputNeuron, Double> finalOutputs = new HashMap<OutputNeuron, Double>();
         Map<Neuron, Double> nets = new HashMap<Neuron, Double>();
         Set<Neuron> finalDropoutMask = new HashSet<Neuron>();
-  
-      deltasCache.clear();
-      deltaBiasesCache.clear();
-      deltaWeightsCache.clear();
-      
-      for (Neuron n : inputLayer) {
+
+        deltasCache.clear();
+        deltaBiasesCache.clear();
+        deltaWeightsCache.clear();
+
+        for (Neuron n : inputLayer) {
             nets.put(n, netsCache.get(n));
             netsCache.remove(n);
         }
@@ -335,8 +333,8 @@ public class NeuralNetwork implements Serializable {
             for (Neuron n : hiddenLayer) {
                 nets.put(n, netsCache.get(n));
                 netsCache.remove(n);
-                if(dropoutMaskCache.contains(n))
-                  finalDropoutMask.add(n);
+                if (dropoutMaskCache.contains(n))
+                    finalDropoutMask.add(n);
                 dropoutMaskCache.remove(n);
             }
         }
@@ -347,7 +345,7 @@ public class NeuralNetwork implements Serializable {
             finalOutputsCache.remove(n);
             netsCache.remove(n);
         }
-  
+
         return new NeuralNetworkOutput(finalOutputs, nets, finalDropoutMask);
     }
 
@@ -373,9 +371,10 @@ public class NeuralNetwork implements Serializable {
         if (Double.compare(that.hiddenBias, hiddenBias) != 0) return false;
         if (Double.compare(that.outputBias, outputBias) != 0) return false;
         if (Double.compare(that.eta, eta) != 0) return false;
-        if (!inputLayer.equals(that.inputLayer)) return false;
-        if (!hiddenLayers.equals(that.hiddenLayers)) return false;
-        return outputLayer.equals(that.outputLayer);
+        if (Double.compare(that.dropoutPercentage, dropoutPercentage) != 0) return false;
+        if (inputLayer != null ? !inputLayer.equals(that.inputLayer) : that.inputLayer != null) return false;
+        if (hiddenLayers != null ? !hiddenLayers.equals(that.hiddenLayers) : that.hiddenLayers != null) return false;
+        return outputLayer != null ? outputLayer.equals(that.outputLayer) : that.outputLayer == null;
     }
 
     public static class SimpleNNInput implements NeuralNetworkInput {
