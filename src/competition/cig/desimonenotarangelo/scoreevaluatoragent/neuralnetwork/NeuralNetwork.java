@@ -55,8 +55,11 @@ public class NeuralNetwork implements Serializable {
 
     public void saveNeuralNetwork(String fileName) {
         try {
+            // Get current time
+            long start = System.currentTimeMillis();
             FileOutputStream fileOut = new FileOutputStream(fileName);
-            ObjectOutputStream outStream = new ObjectOutputStream(fileOut);
+            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOut);
+            ObjectOutputStream outStream = new ObjectOutputStream(bufferedOutputStream);
 
             //serialize double fields
             outStream.writeDouble(hiddenBias);
@@ -66,11 +69,9 @@ public class NeuralNetwork implements Serializable {
 
             //serialize weights map
             outStream.writeInt(Link.weights.size());
-            for (Map.Entry<Link, Double> entrycouple : Link.weights.entrySet()) {
-                Link link = entrycouple.getKey();
-                outStream.writeObject(link.getPrev());
-                outStream.writeObject(link.getNext());
-                outStream.writeDouble(entrycouple.getValue());
+            for (Map.Entry<Link, Double> entryCouple : Link.weights.entrySet()) {
+                outStream.writeObject(entryCouple.getKey());
+                outStream.writeDouble(entryCouple.getValue());
             }
 
             //serialize input layer
@@ -111,67 +112,71 @@ public class NeuralNetwork implements Serializable {
             }
 
             outStream.close();
+            bufferedOutputStream.close();
             fileOut.close();
+            // Get elapsed time in milliseconds
+            long elapsedTimeMillis = System.currentTimeMillis() - start;
 
-            System.out.println("Neural network saved in " + fileName);
+            System.out.println("Neural network saved in " + fileName + " in " + elapsedTimeMillis + " ms");
         } catch (IOException i) {
             i.printStackTrace();
         }
     }
 
     private void loadNeuralNetwork(String fileName) throws IOException, ClassNotFoundException {
+        // Get current time
+        long start = System.currentTimeMillis();
         FileInputStream fileIn = new FileInputStream(fileName);
-        ObjectInputStream in = new ObjectInputStream(fileIn);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileIn);
+        ObjectInputStream inStream = new ObjectInputStream(bufferedInputStream);
 
         //deserialize double fields
-        hiddenBias = in.readDouble();
-        outputBias = in.readDouble();
-        eta = in.readDouble();
-        dropoutPercentage = in.readDouble();
+        hiddenBias = inStream.readDouble();
+        outputBias = inStream.readDouble();
+        eta = inStream.readDouble();
+        dropoutPercentage = inStream.readDouble();
 
         //deserialize weights map
-        int weightsMapSize = in.readInt();
+        int weightsMapSize = inStream.readInt();
         for (int i = 0; i < weightsMapSize; i++) {
-            Neuron prevNeuron = (Neuron) in.readObject();
-            Neuron nextNeuron = (Neuron) in.readObject();
-            Link link = new Link(prevNeuron, nextNeuron);
-            Double weight = in.readDouble();
+            Link link = (Link) inStream.readObject();
+            Double weight = inStream.readDouble();
             Link.weights.put(link, weight);
         }
 
         //deserialize input layer
-        int inputLayerDim = in.readInt();
+        int inputLayerDim = inStream.readInt();
         inputLayer = new LinkedHashSet<InputNeuron>(inputLayerDim);
         for (int i = 0; i < inputLayerDim; i++) {
-            InputNeuron inputNeuron = (InputNeuron) in.readObject();
-            int nextNeuronsSize = in.readInt();
+            InputNeuron inputNeuron = (InputNeuron) inStream.readObject();
+            int nextNeuronsSize = inStream.readInt();
             Set<Link> nextNeurons = new HashSet<Link>(nextNeuronsSize);
             for (int j = 0; j < nextNeuronsSize; j++)
-                nextNeurons.add((Link) in.readObject());
+                nextNeurons.add((Link) inStream.readObject());
             inputNeuron.setNextNeurons(nextNeurons);
             inputLayer.add(inputNeuron);
         }
 
         //deserialize hidden layers
-        int hiddenLayersDim = in.readInt();
+        int hiddenLayersDim = inStream.readInt();
         hiddenLayers = new ArrayList<Set<HiddenNeuron>>(hiddenLayersDim);
         for (int i = 0; i < hiddenLayersDim; i++) {
             //deserialize hidden layer
-            int hiddenLayerDim = in.readInt();
+            int hiddenLayerDim = inStream.readInt();
             Set<HiddenNeuron> hiddenLayer = new LinkedHashSet<HiddenNeuron>(hiddenLayerDim);
             for (int j = 0; j < hiddenLayerDim; j++) {
-                HiddenNeuron hiddenNeuron = (HiddenNeuron) in.readObject();
+                HiddenNeuron hiddenNeuron = (HiddenNeuron) inStream.readObject();
 
-                int prevNeuronsSize = in.readInt();
+                int prevNeuronsSize = inStream.readInt();
                 Set<Link> prevNeurons = new HashSet<Link>(prevNeuronsSize);
                 for (int k = 0; k < prevNeuronsSize; k++)
-                    prevNeurons.add((Link) in.readObject());
+                    prevNeurons.add((Link) inStream.readObject());
                 hiddenNeuron.setPrevNeurons(prevNeurons);
 
-                int nextNeuronsSize = in.readInt();
+                int nextNeuronsSize = inStream.readInt();
                 Set<Link> nextNeurons = new HashSet<Link>(nextNeuronsSize);
                 for (int l = 0; l < nextNeuronsSize; l++)
-                    nextNeurons.add((Link) in.readObject());
+                    nextNeurons.add((Link) inStream.readObject());
                 hiddenNeuron.setNextNeurons(nextNeurons);
 
                 hiddenLayer.add(hiddenNeuron);
@@ -180,22 +185,25 @@ public class NeuralNetwork implements Serializable {
         }
 
         //deserialize output layer
-        int outputLayerDim = in.readInt();
+        int outputLayerDim = inStream.readInt();
         outputLayer = new LinkedHashSet<OutputNeuron>(outputLayerDim);
         for (int i = 0; i < outputLayerDim; i++) {
-            OutputNeuron outputNeuron = (OutputNeuron) in.readObject();
-            int prevNeuronsSize = in.readInt();
+            OutputNeuron outputNeuron = (OutputNeuron) inStream.readObject();
+            int prevNeuronsSize = inStream.readInt();
             Set<Link> prevNeurons = new HashSet<Link>(prevNeuronsSize);
             for (int j = 0; j < prevNeuronsSize; j++)
-                prevNeurons.add((Link) in.readObject());
+                prevNeurons.add((Link) inStream.readObject());
             outputNeuron.setPrevNeurons(prevNeurons);
             outputLayer.add(outputNeuron);
         }
 
-        in.close();
+        inStream.close();
+        bufferedInputStream.close();
         fileIn.close();
+        // Get elapsed time in milliseconds
+        long elapsedTimeMillis = System.currentTimeMillis() - start;
 
-        System.out.println("Neural network loaded from " + fileName);
+        System.out.println("Neural network loaded from " + fileName + " in " + elapsedTimeMillis + " ms");
     }
 
     public void saveOutputLayerDeltaWeightsAndBiases(Map<OutputNeuron, Double> targetOutput) {

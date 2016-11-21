@@ -16,13 +16,13 @@ public class NeuralNetworkBuilder {
     private ActivationFunction inputLayerActivationFunction;
     private ActivationFunction hiddenLayersActivationFunction;
     private ActivationFunction outputLayerActivationFunction;
-    
+
     private double dropoutPercentage = 0.0;
-  
+
     private double defaultHiddenBias = 1,
             defaultOutputBias = 1,
             eta = 0.0002;
-  
+
     public NeuralNetworkBuilder() {
         inputLayer = new LinkedHashSet<InputNeuron>();
         hiddenLayers = new ArrayList<Set<HiddenNeuron>>();
@@ -31,26 +31,22 @@ public class NeuralNetworkBuilder {
         hiddenLayersActivationFunction = new BentIdentity();
         outputLayerActivationFunction = new BentIdentity();
     }
-    
-    public NeuralNetworkBuilder setDropoutPercentage(double percentage)
-    {
-        if(percentage<0 || percentage >1)
+
+    public NeuralNetworkBuilder setDropoutPercentage(double percentage) {
+        if (percentage < 0 || percentage > 1)
             throw new IllegalArgumentException("Input must be between 0 and 1");
         dropoutPercentage = percentage;
-        
+
         return this;
     }
-    
-    public double getDropoutPercentage()
-    { return dropoutPercentage; }
-    
+
     public NeuralNetworkBuilder addInputLayer(int inputLayerDim) {
         if (!inputLayer.isEmpty())
             throw new IllegalStateException("Input Layer already added");
 
         for (int i = 0; i < inputLayerDim; i++)
             inputLayer.add(new InputNeuron(1, inputLayerActivationFunction));
-      
+
         return this;
     }
 
@@ -114,13 +110,13 @@ public class NeuralNetworkBuilder {
     public NeuralNetworkBuilder addOutputLayer(String... outputIDs) {
         return addOutputLayer(WeightInitializer.Type.RANDOM, outputIDs);
     }
-    
+
     public NeuralNetworkBuilder addOutputLayer(WeightInitializer.Type weightInitializerType, String... outputIDs) {
         if (hiddenLayers.isEmpty())
             throw new IllegalStateException("Missing at least one Hidden Layer");
         if (!outputLayer.isEmpty())
             throw new IllegalStateException("Output Layer already added");
-        
+
         //get last hidden layer
         Set<HiddenNeuron> lastHiddenLayer = hiddenLayers.get(hiddenLayers.size() - 1);
         int inputNeurons = lastHiddenLayer.size();
@@ -135,7 +131,7 @@ public class NeuralNetworkBuilder {
         //need to link output layer with the last hidden layer
         for (HiddenNeuron hiddenNeuron : lastHiddenLayer)
             hiddenNeuron.linkToNextLayer(outputLayer, weightInitializer);
-        
+
         return this;
     }
 
@@ -210,6 +206,8 @@ public class NeuralNetworkBuilder {
     public Set<OutputNeuron> getOutputLayer() {
         return outputLayer;
     }
+
+    public double getDropoutPercentage() { return dropoutPercentage; }
 
     public ActivationFunction getInputLayerActivationFunction() {
         return inputLayerActivationFunction;

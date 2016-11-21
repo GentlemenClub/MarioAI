@@ -28,14 +28,12 @@ public class Play {
             EvaluationOptions options = new CmdLineOptions(new String[0]);
             options.setAgent(controller);
             Task task = new ProgressTask(options);
-            options.setMaxFPS(false);
+            options.setMaxFPS(true);
             options.setVisualization(true);
             options.setNumberOfTrials(1);
             options.setMatlabFileName("");
-            //options.setLevelRandSeed((int) 0);//(Math.random() * Integer.MAX_VALUE));
-            //options.setLevelDifficulty(0);
-            options.setLevelRandSeed((int) 1);//(Math.random() * Integer.MAX_VALUE));
-            options.setLevelDifficulty(3);
+            options.setLevelRandSeed((int) (Math.random() * Integer.MAX_VALUE));
+            options.setLevelDifficulty(0);
             task.setOptions(options);
             System.out.println("Score: " + task.evaluate(controller)[0]);
             ((ScoreEvaluatorAgent) controller).saveAI();
