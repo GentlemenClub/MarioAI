@@ -3,7 +3,6 @@ package competition.cig.desimonenotarangelo.scoreevaluatoragent;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.*;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.BentIdentity;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.OutputNeuron;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
 
 import java.io.IOException;
@@ -15,10 +14,10 @@ public class Learner {
     private NeuralNetworkOutput lastNNOutput = null;
     private double gamma = 0.8;
     private String nnFileName = "MarioAI.ai";
-    private final static int nActions = 32;
-    private final static int nButtons = 5;
+    public final static int nActions = 32;
+    public final static int nButtons = 5;
     private OutputNeuron lastChosenActionNeuron;
-
+    
     public Learner(double epsilon) {
         try {
             network = new NeuralNetwork(nnFileName);
@@ -26,6 +25,7 @@ public class Learner {
             ActivationFunction activationFunction = new BentIdentity();
             //ActivationFunction activationFunction = new SigmoidFunction();
             //ActivationFunction activationFunction = new ReLU();
+            //ActivationFunction activationFunction = new Identity();
 
             ActionIterator iterator = new ActionIterator();
             String[] ids = new String[nActions];
@@ -47,12 +47,12 @@ public class Learner {
                     .setInputLayerActivationFunction(activationFunction)
                     .setHiddenLayersActivationFunction(activationFunction)
                     .setOutputLayerActivationFunction(activationFunction)
-                    .addInputLayer(22 * 22 + 1)// Environment
+                    .addInputLayer(22 * 22 + nButtons + 1)// Environment
                     .addHiddenLayer(WeightInitializer.Type.XAVIER, 200)
                     .addHiddenLayer(WeightInitializer.Type.XAVIER, 100)
                     .addOutputLayer(WeightInitializer.Type.XAVIER, ids)
                     .setDropoutPercentage(0.5)
-                    .setEta(0.0002)
+                    .setEta(0.000002)
                     .build();
             System.out.println("Creating new neural network");
         }
@@ -101,11 +101,17 @@ public class Learner {
             inputAsList = new ArrayList<Double>();
 
             for (QState s : environmentHistory) {
-                double[][] observation = s.getObservation();
                 //Environment input
+                double[][] observation = s.getObservation();
                 for (int i = 0; i < observation.length; i++)
                     for (int j = 0; j < observation.length; j++)
                         inputAsList.add(observation[i][j]);
+                
+                //Last Action input
+                double[] lastAction = s.getLastAction();
+                for (int i = 0; i < lastAction.length; i++)
+                    inputAsList.add(lastAction[i]);
+    
                 inputAsList.add(s.getMarioMode());
             }
         }
@@ -173,18 +179,18 @@ public class Learner {
     public boolean[] getBestAction(List<QState> environmentHistory) {
         ActionIterator iterator = new ActionIterator();
         boolean[] currAction;
-        double maxQvalue = Double.NEGATIVE_INFINITY;
+        double maxQvalue;
         boolean[] chosenAction = null;//As long as maxQValue is negative infinity, this variable is always assigned
 
         NNInput nnInput = new NNInput(environmentHistory);
         NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
         OutputNeuron maxQValueNeuron = nnOutput.getMaxValueNeuron();
-
+        
         chosenAction = parseActionString(maxQValueNeuron.getId());
         lastNNOutput = nnOutput;
 
-        if (chosenAction == null)
-            System.out.println("OMG");
+        //if (chosenAction == null)
+        //    System.out.println("OMG");
 
         return chosenAction;
     }

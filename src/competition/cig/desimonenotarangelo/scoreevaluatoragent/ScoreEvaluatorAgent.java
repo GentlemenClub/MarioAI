@@ -12,7 +12,7 @@ import static competition.cig.desimonenotarangelo.scoreevaluatoragent.PatternHol
 public class ScoreEvaluatorAgent implements Agent {
     
     private String name;
-    private boolean[] action;
+    private boolean[] action = new boolean[Learner.nButtons];
     private double lastCoins = 0;
     private int lastMarioMode = 2;
     private final int actionTurns=2;
@@ -41,21 +41,37 @@ public class ScoreEvaluatorAgent implements Agent {
 
     public void saveAI() { myLearner.saveStatus(); }
     
+    private double[] getDoubleActionFromBoolean(boolean[] action)
+    {
+      double[] doubleAction = new double[action.length];
+      for(int i = 0; i < action.length ; i++ )
+      {
+        //We avoid 0.0 as much as possible in input to help learning
+        if(action[i])
+          doubleAction[i] = 0.99;
+        else
+          doubleAction[i] = 0.01;
+      }
+      return doubleAction;
+    }
+  
     private void updateHistory(Environment observation)
     {
         double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
                 0, 2,
-                0, 1);
-        
+                0.01, 0.99);
+  
+        double[] doubleAction = getDoubleActionFromBoolean(action);
+      
         if(stateHistory.size()==historySize)
         {
           stateHistory.removeFirst();
-          stateHistory.addLast(new QState(getSubObservation(observation),normalizedMarioMode));
+          stateHistory.addLast(new QState(getNormalizedObservation(observation),doubleAction,normalizedMarioMode));
         }
         else//First time only
         {
             for(int i=0; i<historySize; i++)
-              stateHistory.addLast(new QState(getSubObservation(observation),normalizedMarioMode));
+              stateHistory.addLast(new QState(getNormalizedObservation(observation),doubleAction,normalizedMarioMode));
         }
     }
     
@@ -81,6 +97,7 @@ public class ScoreEvaluatorAgent implements Agent {
         lastHolePosX = 0.0;
         lastMarioHoleStatus = PatternHoleRecognition.MarioHoleStatus.BEFORE;
         stateHistory.clear();
+        action = new boolean[Learner.nButtons];
         //gameFinished = false;
     }
     
@@ -145,7 +162,7 @@ public class ScoreEvaluatorAgent implements Agent {
                   return 0;
             case Mario.STATUS_WIN :
                 //gameFinished = true;
-                return 10000;
+                return 1000;
             default :
                 return 0;
         }
@@ -163,13 +180,11 @@ public class ScoreEvaluatorAgent implements Agent {
         //                      0,1);
     }
     
-    //gets submatrix 9x9
-    public static double[][] getSubObservation(Environment Observation) {
+  
+    public static double[][] getNormalizedObservation(Environment Observation) {
         byte[][] completeObservation = Observation.getCompleteObservation();
         double[][] subObservation = new double[22][22];
-        //byte [][] notNormalizedObservation = new byte[9][9];
-        //int k = 0, z = 0;
-  
+      
       for (int i = 0; i < 22; i++)
       {
           for (int j = 0; j < 22; j++)
@@ -179,38 +194,8 @@ public class ScoreEvaluatorAgent implements Agent {
                       Byte.MIN_VALUE, Byte.MAX_VALUE,
                       0, 1);
           }
-      }//for (int i = 7; i < 16; i++)
-         //   for (int j = 7; j < 16; j++) {
-                //subObservation[i][j] = normalizeValue(completeObservation[i][j],
-                 //                      Byte.MIN_VALUE,Byte.MAX_VALUE,
-                  //                     0,1);
-                //notNormalizedObservation[z][k] = completeObservation[i][j];
-                //k++;
-                //if (k == 9) {
-                 //   k = 0;
-                  //  z++;
-               // }
-            //}
-    /*   System.out.println("---------------------------------------");
-    
-        for (int i = 0; i < 9; i++)
-      {
-          for (int j = 0; j < 9; j++)
-              System.out.printf("[ %3f]", subObservation[i][j]);
-          System.out.println();
       }
-        System.out.println("---------------------------------------");
-    
-        for (int i = 0; i < 9; i++)
-        {
-            for (int j = 0; j < 9; j++)
-                System.out.printf("[ %3d]", notNormalizedObservation[i][j]);
-            System.out.println();
-        }
-      
-        System.out.println("---------------------------------------");
-    */
-        return subObservation;
+      return subObservation;
     }
     
     private static double normalizeValue(double x,

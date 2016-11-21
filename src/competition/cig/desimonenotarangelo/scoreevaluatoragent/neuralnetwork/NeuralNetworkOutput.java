@@ -38,7 +38,7 @@ public class NeuralNetworkOutput {
 
         for (OutputNeuron n : finalOutputs.keySet()) {
             double currValue = finalOutputs.get(n);
-            if (currMax < currValue) {
+            if (maxValueNeuron == null || currMax < currValue) {
                 maxValueNeuron = n;
                 currMax = currValue;
             }
@@ -53,6 +53,8 @@ public class NeuralNetworkOutput {
     }
     
     public double getValue(OutputNeuron n) {
+        if(finalOutputs.get(n)==null)
+            System.out.print("");
         return finalOutputs.get(n);
     }
 }

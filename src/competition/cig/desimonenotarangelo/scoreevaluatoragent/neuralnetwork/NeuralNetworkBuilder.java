@@ -19,8 +19,8 @@ public class NeuralNetworkBuilder {
     
     private double dropoutPercentage = 0.0;
   
-    private double defaultHiddenBias = 0.1,
-            defaultOutputBias = 0.1,
+    private double defaultHiddenBias = 1,
+            defaultOutputBias = 1,
             eta = 0.0002;
   
     public NeuralNetworkBuilder() {

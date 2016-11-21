@@ -233,9 +233,7 @@ public class NeuralNetwork implements Serializable {
     }
 
     public void backPropagation(NeuralNetworkOutput nnOutput, Map<OutputNeuron, Double> targetOutput) {
-
-        //TODO: Bias update to be implemented
-
+      
         //Copies Values from input into the cache
         finalOutputsCache.putAll(nnOutput.getFinalOutputs());
         netsCache.putAll(nnOutput.getNets());
