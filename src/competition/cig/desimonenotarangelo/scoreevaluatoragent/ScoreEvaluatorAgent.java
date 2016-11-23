@@ -28,7 +28,7 @@ public class ScoreEvaluatorAgent implements Agent {
     private LinkedList<QState> stateHistory;
     
     private final int historySize = 1;
-    private final double epsilon = 0.2;
+    private final double epsilon = 0.8;
     private final double holePosEpsilon = 200;
     
     public ScoreEvaluatorAgent()
@@ -46,11 +46,11 @@ public class ScoreEvaluatorAgent implements Agent {
       double[] doubleAction = new double[action.length];
       for(int i = 0; i < action.length ; i++ )
       {
-        //We avoid 0.0 as much as possible in input to help learning
+        //0.0 is avoided as much as possible in input to help learning
         if(action[i])
-          doubleAction[i] = 0.99;
+          doubleAction[i] = 1;
         else
-          doubleAction[i] = 0.01;
+          doubleAction[i] = 0;
       }
       return doubleAction;
     }
@@ -59,7 +59,7 @@ public class ScoreEvaluatorAgent implements Agent {
     {
         double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
                 0, 2,
-                0.01, 0.99);
+                0, 1);
   
         double[] doubleAction = getDoubleActionFromBoolean(action);
       
@@ -80,11 +80,11 @@ public class ScoreEvaluatorAgent implements Agent {
         switch(mode)
         {
             case 0:
-                return 10;
+                return 0;
             case 1:
-                return 70;
+                return 400;
             case 2:
-                return 100;
+                return 800;
             default:
                 return 0;
         }
@@ -103,12 +103,12 @@ public class ScoreEvaluatorAgent implements Agent {
     
     public double getTotalScore(Environment observation)
     {
-        return  getLevelPosition(observation)+
+        return  getLevelPosition(observation)*10+
                 getRewardFromMarioStatus(observation.getMarioStatus())+
                 getMarioModeValue(observation.getMarioMode())+
                 observation.getKillsTotal()*10+
-                Mario.coins+
-                nJumpedHoles*10;
+                Mario.coins*10+
+                nJumpedHoles*100;
     }
     
     private double getReward(Environment observation)
@@ -157,12 +157,12 @@ public class ScoreEvaluatorAgent implements Agent {
             case Mario.STATUS_DEAD :
                 //gameFinished = true;
                 if(getTimeLeft()>0)//Gives penalty only if mario is dead for a mistake and not for timeout
-                  return -100;
+                  return -1000;
                 else
                   return 0;
-            case Mario.STATUS_WIN :
+           // case Mario.STATUS_WIN :
                 //gameFinished = true;
-                return 1000;
+            //    return 10000;
             default :
                 return 0;
         }
@@ -212,10 +212,6 @@ public class ScoreEvaluatorAgent implements Agent {
         //if(gameFinished)
         //
         //#   return new boolean[5];
-        
-        double normalizedMarioMode = normalizeValue(observation.getMarioMode(),
-                                                    0,2,
-                                                    0,1);
         
         boolean isMarioDead = (observation.getMarioStatus()==Mario.STATUS_DEAD);
         

@@ -3,7 +3,7 @@ package competition.cig.desimonenotarangelo.scoreevaluatoragent;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.*;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.BentIdentity;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.ValueGenerator;
 
 import java.io.IOException;
 import java.util.*;
@@ -12,7 +12,7 @@ public class Learner {
     private NeuralNetwork network;
     private double epsilon;
     private NeuralNetworkOutput lastNNOutput = null;
-    private double gamma = 0.8;
+    private double gamma = 0.2;
     private String nnFileName = "MarioAI.ai";
     public final static int nActions = 32;
     public final static int nButtons = 5;
@@ -48,9 +48,9 @@ public class Learner {
                     .setHiddenLayersActivationFunction(activationFunction)
                     .setOutputLayerActivationFunction(activationFunction)
                     .addInputLayer(22 * 22 + nButtons + 1)// Environment
-                    .addHiddenLayer(WeightInitializer.Type.XAVIER, 200)
-                    .addHiddenLayer(WeightInitializer.Type.XAVIER, 100)
-                    .addOutputLayer(WeightInitializer.Type.XAVIER, ids)
+                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, 200)
+                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, 100)
+                    .addOutputLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, ids)
                     .setDropoutPercentage(0.5)
                     .setEta(0.000002)
                     .build();

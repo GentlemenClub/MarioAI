@@ -11,9 +11,7 @@ import java.io.*;
 import java.util.*;
 
 public class NeuralNetwork implements Serializable {
-    private double hiddenBias = 0.35,
-            outputBias = 0.60,
-            eta = 0.0002,
+    private double eta = 0.0002,
             dropoutPercentage = 0;
 
     private Set<InputNeuron> inputLayer;
@@ -47,8 +45,6 @@ public class NeuralNetwork implements Serializable {
         this.inputLayer = neuralNetworkBuilder.getInputLayer();
         this.hiddenLayers = neuralNetworkBuilder.getHiddenLayers();
         this.outputLayer = neuralNetworkBuilder.getOutputLayer();
-        this.hiddenBias = neuralNetworkBuilder.getDefaultHiddenBias();
-        this.outputBias = neuralNetworkBuilder.getDefaultOutputBias();
         this.eta = neuralNetworkBuilder.getEta();
         this.dropoutPercentage = neuralNetworkBuilder.getDropoutPercentage();
     }
@@ -62,8 +58,6 @@ public class NeuralNetwork implements Serializable {
             ObjectOutputStream outStream = new ObjectOutputStream(bufferedOutputStream);
 
             //serialize double fields
-            outStream.writeDouble(hiddenBias);
-            outStream.writeDouble(outputBias);
             outStream.writeDouble(eta);
             outStream.writeDouble(dropoutPercentage);
 
@@ -131,8 +125,6 @@ public class NeuralNetwork implements Serializable {
         ObjectInputStream inStream = new ObjectInputStream(bufferedInputStream);
 
         //deserialize double fields
-        hiddenBias = inStream.readDouble();
-        outputBias = inStream.readDouble();
         eta = inStream.readDouble();
         dropoutPercentage = inStream.readDouble();
 
@@ -219,6 +211,11 @@ public class NeuralNetwork implements Serializable {
 
             for (Link l : n.getPrevNeurons()) {
                 Neuron prev = l.getPrev();
+    
+                //if this prev neuron was dropped out, link with prev must not be updated
+                if(dropoutMaskCache.contains(prev))
+                    continue;
+
                 double deltaWeight = deltaBias * prev.computeOutput(netsCache.get(prev));
                 deltaWeightsCache.put(l, deltaWeight);
             }
@@ -228,12 +225,22 @@ public class NeuralNetwork implements Serializable {
     public void saveHiddenLayerDeltaWeightsandBiases(Set<HiddenNeuron> currHiddenLayer) {
         //Calculates deltaWeigths for each node in the hidden layer
         for (HiddenNeuron n : currHiddenLayer) {
+            
+            //If neuron was dropped out, no update must be done
+            if(dropoutMaskCache.contains(n))
+                continue;
+            
             deltasCache.put(n, n.computeDelta());
             double deltaBias = (-eta) * n.computeDelta();
             deltaBiasesCache.put(n, deltaBias);
 
             for (Link l : n.getPrevNeurons()) {
                 Neuron prev = l.getPrev();
+                
+                //if this prev neuron was dropped out, link with prev must not be updated
+                if(dropoutMaskCache.contains(prev))
+                    continue;
+                
                 double deltaWeight = (-eta) * deltasCache.get(n) * prev.computeOutput(netsCache.get(prev));
                 deltaWeightsCache.put(l, deltaWeight);
             }
@@ -276,6 +283,7 @@ public class NeuralNetwork implements Serializable {
         deltaBiasesCache.clear();
         netsCache.clear();
         deltaWeightsCache.clear();
+        dropoutMaskCache.clear();
     }
 
     public NeuralNetworkOutput forwardPropagation(NeuralNetworkInput input) {
@@ -304,12 +312,16 @@ public class NeuralNetwork implements Serializable {
     }
 
     private void forwardLayerPass(Set<? extends Neuron> layer) {
-        for (Neuron n : layer) {
-            double probability = Math.random();
-            if (probability < dropoutPercentage
-                    && n instanceof HiddenNeuron
-                    && dropoutMaskCache.size() < layer.size())
+        int nDroppedOutNodes = 0;
+        for (Neuron n : layer)
+        {
+            if (n instanceof HiddenNeuron
+                    && Math.random() < dropoutPercentage
+                    && nDroppedOutNodes < layer.size())
+            {
+                nDroppedOutNodes++;
                 dropoutMaskCache.add(n);
+            }
             else
                 n.forwardPass();
         }
@@ -317,7 +329,7 @@ public class NeuralNetwork implements Serializable {
 
     public NeuralNetworkOutput getOutputAndClean() {
         Map<OutputNeuron, Double> finalOutputs = new HashMap<OutputNeuron, Double>();
-        Map<Neuron, Double> nets = new HashMap<Neuron, Double>();
+        Map<Neuron, Double> finalNets = new HashMap<Neuron, Double>();
         Set<Neuron> finalDropoutMask = new HashSet<Neuron>();
 
         deltasCache.clear();
@@ -325,28 +337,30 @@ public class NeuralNetwork implements Serializable {
         deltaWeightsCache.clear();
 
         for (Neuron n : inputLayer) {
-            nets.put(n, netsCache.get(n));
+            finalNets.put(n, netsCache.get(n));
             netsCache.remove(n);
         }
 
         for (Set<HiddenNeuron> hiddenLayer : hiddenLayers) {
             for (Neuron n : hiddenLayer) {
-                nets.put(n, netsCache.get(n));
+                finalNets.put(n, netsCache.get(n));
                 netsCache.remove(n);
                 if (dropoutMaskCache.contains(n))
+                {
                     finalDropoutMask.add(n);
-                dropoutMaskCache.remove(n);
+                    dropoutMaskCache.remove(n);
+                }
             }
         }
 
         for (OutputNeuron n : outputLayer) {
-            nets.put(n, netsCache.get(n));
+            finalNets.put(n, netsCache.get(n));
             finalOutputs.put(n, finalOutputsCache.get(n));
             finalOutputsCache.remove(n);
             netsCache.remove(n);
         }
 
-        return new NeuralNetworkOutput(finalOutputs, nets, finalDropoutMask);
+        return new NeuralNetworkOutput(finalOutputs, finalNets, finalDropoutMask);
     }
 
     public Set<InputNeuron> getInputLayer() {
@@ -367,9 +381,7 @@ public class NeuralNetwork implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
 
         NeuralNetwork that = (NeuralNetwork) o;
-
-        if (Double.compare(that.hiddenBias, hiddenBias) != 0) return false;
-        if (Double.compare(that.outputBias, outputBias) != 0) return false;
+        
         if (Double.compare(that.eta, eta) != 0) return false;
         if (Double.compare(that.dropoutPercentage, dropoutPercentage) != 0) return false;
         if (inputLayer != null ? !inputLayer.equals(that.inputLayer) : that.inputLayer != null) return false;

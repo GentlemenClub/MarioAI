@@ -1,7 +1,7 @@
 package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.ValueGenerator;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -16,10 +16,10 @@ public class Link implements Serializable {
         this.next = out;
     }
 
-    public Link(Neuron in, Neuron out, WeightInitializer weightInitializer) {
+    public Link(Neuron in, Neuron out, ValueGenerator weightInitializer) {
         this.prev = in;
         this.next = out;
-        setWeight(weightInitializer.getWeight());
+        setWeight(weightInitializer.getValue());
     }
 
     public Neuron getPrev() { return prev; }

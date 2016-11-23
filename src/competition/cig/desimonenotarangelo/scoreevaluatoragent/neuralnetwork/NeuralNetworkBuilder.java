@@ -2,10 +2,10 @@ package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.BentIdentity;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.RandomWeightInitializer;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.XavierWeightInitializer;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.ZeroWeightInitializer;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.RandomGenerator;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.ValueGenerator;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.XavierGenerator;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.ZeroGenerator;
 
 import java.util.*;
 
@@ -16,12 +16,10 @@ public class NeuralNetworkBuilder {
     private ActivationFunction inputLayerActivationFunction;
     private ActivationFunction hiddenLayersActivationFunction;
     private ActivationFunction outputLayerActivationFunction;
-
+    
     private double dropoutPercentage = 0.0;
 
-    private double defaultHiddenBias = 1,
-            defaultOutputBias = 1,
-            eta = 0.0002;
+    private double eta = 0.0002;
 
     public NeuralNetworkBuilder() {
         inputLayer = new LinkedHashSet<InputNeuron>();
@@ -31,7 +29,7 @@ public class NeuralNetworkBuilder {
         hiddenLayersActivationFunction = new BentIdentity();
         outputLayerActivationFunction = new BentIdentity();
     }
-
+    
     public NeuralNetworkBuilder setDropoutPercentage(double percentage) {
         if (percentage < 0 || percentage > 1)
             throw new IllegalArgumentException("Input must be between 0 and 1");
@@ -51,21 +49,24 @@ public class NeuralNetworkBuilder {
     }
 
     public NeuralNetworkBuilder addHiddenLayer(int hiddenLayerDim) {
-        return addHiddenLayer(WeightInitializer.Type.RANDOM, hiddenLayerDim);
+        return addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, hiddenLayerDim);
     }
 
-    public NeuralNetworkBuilder addHiddenLayer(WeightInitializer.Type weightInitializerType, int hiddenLayerDim) {
+    public NeuralNetworkBuilder addHiddenLayer(ValueGenerator.Type weightInitializerType,
+                                               ValueGenerator.Type biasInitializerType,
+                                               int hiddenLayerDim) {
         if (inputLayer.isEmpty())
             throw new IllegalStateException("Missing Input Layer");
 
         Set<? extends Neuron> previousLayer = hiddenLayers.size() > 0 ? hiddenLayers.get(hiddenLayers.size() - 1) : inputLayer;
         int inputNeurons = previousLayer.size();
         int outputNeurons = hiddenLayerDim;
-        WeightInitializer weightInitializer = getWeightInitializerFromType(weightInitializerType, inputNeurons, outputNeurons);
-
+        ValueGenerator weightInitializer = getValueInitializerFromType(weightInitializerType, inputNeurons, outputNeurons);
+        ValueGenerator biasInitializer = getValueInitializerFromType(biasInitializerType, inputNeurons, outputNeurons);
+        
         Set<HiddenNeuron> hiddenLayer = new LinkedHashSet<HiddenNeuron>(hiddenLayerDim);
         for (int i = 0; i < hiddenLayerDim; i++) {
-            HiddenNeuron hiddenNeuron = new HiddenNeuron(defaultHiddenBias, hiddenLayersActivationFunction);
+            HiddenNeuron hiddenNeuron = new HiddenNeuron(biasInitializer.getValue(), hiddenLayersActivationFunction);
             hiddenNeuron.linkToPrevLayer(previousLayer, weightInitializer);
             hiddenLayer.add(hiddenNeuron);
         }
@@ -80,10 +81,12 @@ public class NeuralNetworkBuilder {
     }
 
     public NeuralNetworkBuilder addOutputLayer(int outputLayerDim) {
-        return addOutputLayer(WeightInitializer.Type.RANDOM, outputLayerDim);
+        return addOutputLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, outputLayerDim);
     }
 
-    public NeuralNetworkBuilder addOutputLayer(WeightInitializer.Type weightInitializerType, int outputLayerDim) {
+    public NeuralNetworkBuilder addOutputLayer(ValueGenerator.Type weightInitializerType,
+                                               ValueGenerator.Type biasInitializerType,
+                                               int outputLayerDim) {
         if (hiddenLayers.isEmpty())
             throw new IllegalStateException("Missing at least one Hidden Layer");
         if (!outputLayer.isEmpty())
@@ -93,10 +96,11 @@ public class NeuralNetworkBuilder {
         Set<HiddenNeuron> lastHiddenLayer = hiddenLayers.get(hiddenLayers.size() - 1);
         int inputNeurons = lastHiddenLayer.size();
         int outputNeurons = outputLayerDim;
-        WeightInitializer weightInitializer = getWeightInitializerFromType(weightInitializerType, inputNeurons, outputNeurons);
+        ValueGenerator weightInitializer = getValueInitializerFromType(weightInitializerType, inputNeurons, outputNeurons);
+        ValueGenerator biasInitializer = getValueInitializerFromType(biasInitializerType, inputNeurons, outputNeurons);
 
         for (int i = 0; i < outputLayerDim; i++) {
-            OutputNeuron outputNeuron = new OutputNeuron(defaultOutputBias, outputLayerActivationFunction);
+            OutputNeuron outputNeuron = new OutputNeuron(biasInitializer.getValue(), outputLayerActivationFunction);
             outputNeuron.linkToPrevLayer(lastHiddenLayer, weightInitializer);
             outputLayer.add(outputNeuron);
         }
@@ -108,10 +112,12 @@ public class NeuralNetworkBuilder {
     }
 
     public NeuralNetworkBuilder addOutputLayer(String... outputIDs) {
-        return addOutputLayer(WeightInitializer.Type.RANDOM, outputIDs);
+        return addOutputLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, outputIDs);
     }
 
-    public NeuralNetworkBuilder addOutputLayer(WeightInitializer.Type weightInitializerType, String... outputIDs) {
+    public NeuralNetworkBuilder addOutputLayer(ValueGenerator.Type weightInitializerType,
+                                               ValueGenerator.Type biasInitializerType,
+                                               String... outputIDs) {
         if (hiddenLayers.isEmpty())
             throw new IllegalStateException("Missing at least one Hidden Layer");
         if (!outputLayer.isEmpty())
@@ -121,10 +127,11 @@ public class NeuralNetworkBuilder {
         Set<HiddenNeuron> lastHiddenLayer = hiddenLayers.get(hiddenLayers.size() - 1);
         int inputNeurons = lastHiddenLayer.size();
         int outputNeurons = outputIDs.length;
-        WeightInitializer weightInitializer = getWeightInitializerFromType(weightInitializerType, inputNeurons, outputNeurons);
+        ValueGenerator weightInitializer = getValueInitializerFromType(weightInitializerType, inputNeurons, outputNeurons);
+        ValueGenerator biasInitializer = getValueInitializerFromType(biasInitializerType, inputNeurons, outputNeurons);
 
         for (String outputID : outputIDs) {
-            OutputNeuron outputNeuron = new OutputNeuron(defaultOutputBias, outputLayerActivationFunction, outputID);
+            OutputNeuron outputNeuron = new OutputNeuron(biasInitializer.getValue(), outputLayerActivationFunction, outputID);
             outputNeuron.linkToPrevLayer(lastHiddenLayer, weightInitializer);
             outputLayer.add(outputNeuron);
         }
@@ -135,16 +142,16 @@ public class NeuralNetworkBuilder {
         return this;
     }
 
-    private WeightInitializer getWeightInitializerFromType(WeightInitializer.Type weightInitializerType, int... parameters) {
-        switch (weightInitializerType) {
+    private ValueGenerator getValueInitializerFromType(ValueGenerator.Type valueInitializerType, int... parameters) {
+        switch (valueInitializerType) {
             case RANDOM:
-                return new RandomWeightInitializer();
+                return new RandomGenerator();
             case ZERO:
-                return new ZeroWeightInitializer();
+                return new ZeroGenerator();
             case XAVIER:
-                return new XavierWeightInitializer(parameters[0], parameters[1]);
+                return new XavierGenerator(parameters[0], parameters[1]);
         }
-        return new RandomWeightInitializer();
+        return new RandomGenerator();
     }
 
     public NeuralNetworkBuilder setInputLayerActivationFunction(ActivationFunction inputLayerActivationFunction) {
@@ -171,24 +178,7 @@ public class NeuralNetworkBuilder {
 
         return this;
     }
-
-    public NeuralNetworkBuilder setHiddenLayersBias(double hiddenLayerBias) {
-        defaultHiddenBias = hiddenLayerBias;
-        for (Set<HiddenNeuron> hiddenLayer : hiddenLayers)
-            for (HiddenNeuron hiddenNeuron : hiddenLayer)
-                hiddenNeuron.setBias(hiddenLayerBias);
-
-        return this;
-    }
-
-    public NeuralNetworkBuilder setOutputLayerBias(double outputLayerBias) {
-        defaultOutputBias = outputLayerBias;
-        for (OutputNeuron outputNeuron : outputLayer)
-            outputNeuron.setBias(outputLayerBias);
-
-        return this;
-    }
-
+    
     public NeuralNetworkBuilder setEta(double eta) {
         this.eta = eta;
 
@@ -220,15 +210,7 @@ public class NeuralNetworkBuilder {
     public ActivationFunction getOutputLayerActivationFunction() {
         return outputLayerActivationFunction;
     }
-
-    public double getDefaultHiddenBias() {
-        return defaultHiddenBias;
-    }
-
-    public double getDefaultOutputBias() {
-        return defaultOutputBias;
-    }
-
+    
     public double getEta() {
         return eta;
     }

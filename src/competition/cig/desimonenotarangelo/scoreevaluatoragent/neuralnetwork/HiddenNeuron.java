@@ -2,7 +2,7 @@ package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.ValueGenerator;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -33,20 +33,20 @@ public class HiddenNeuron extends Neuron {
         }
     }
 
-    public void addPrev(Neuron prev, WeightInitializer weightInitializer) {
+    public void addPrev(Neuron prev, ValueGenerator weightInitializer) {
         prevNeurons.add(new Link(prev, this, weightInitializer));
     }
 
-    public void addNext(Neuron next, WeightInitializer weightInitializer) {
+    public void addNext(Neuron next, ValueGenerator weightInitializer) {
         nextNeurons.add(new Link(this, next, weightInitializer));
     }
 
-    public void linkToNextLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer) {
+    public void linkToNextLayer(Set<? extends Neuron> layer, ValueGenerator weightInitializer) {
         for (Neuron neuron : layer)
             addNext(neuron, weightInitializer);
     }
 
-    public void linkToPrevLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer) {
+    public void linkToPrevLayer(Set<? extends Neuron> layer, ValueGenerator weightInitializer) {
         for (Neuron neuron : layer)
             addPrev(neuron, weightInitializer);
     }
@@ -57,6 +57,8 @@ public class HiddenNeuron extends Neuron {
         //for is for future implementations: now only one output node is supported
         for (Link link : nextNeurons) {
             Neuron currNext = link.getNext();
+            if(NeuralNetwork.dropoutMaskCache.contains(currNext))
+                continue;
             sum += NeuralNetwork.deltasCache.get(currNext) * link.getWeight();
         }
         double currentNet = NeuralNetwork.netsCache.get(this);

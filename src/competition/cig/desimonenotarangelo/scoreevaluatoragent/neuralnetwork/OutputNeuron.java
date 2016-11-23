@@ -1,7 +1,7 @@
 package competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork;
 
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.weightinitializers.WeightInitializer;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.ValueGenerator;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -26,20 +26,20 @@ public class OutputNeuron extends Neuron {
         finalOutputs.put(this, computeOutput(nets.get(this)));
     }
 
-    public void addNext(Neuron prev, WeightInitializer weightInitializer) {
+    public void addNext(Neuron prev, ValueGenerator weightInitializer) {
         throw new UnsupportedOperationException();
     }
 
-    public void linkToNextLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer) {
+    public void linkToNextLayer(Set<? extends Neuron> layer, ValueGenerator weightInitializer) {
         throw new UnsupportedOperationException();
     }
 
-    public void linkToPrevLayer(Set<? extends Neuron> layer, WeightInitializer weightInitializer) {
+    public void linkToPrevLayer(Set<? extends Neuron> layer, ValueGenerator weightInitializer) {
         for (Neuron neuron : layer)
             addPrev(neuron, weightInitializer);
     }
 
-    public void addPrev(Neuron prev, WeightInitializer weightInitializer) {
+    public void addPrev(Neuron prev, ValueGenerator weightInitializer) {
         prevNeurons.add(new Link(prev, this, weightInitializer));
     }
 
