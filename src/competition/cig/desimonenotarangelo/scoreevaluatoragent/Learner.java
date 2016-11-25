@@ -12,12 +12,16 @@ public class Learner {
     private NeuralNetwork network;
     private double epsilon;
     private NeuralNetworkOutput lastNNOutput = null;
-    private double gamma = 0.2;
+    private double gamma = 0.7;
     private String nnFileName = "MarioAI.ai";
     public final static int nActions = 32;
     public final static int nButtons = 5;
     private OutputNeuron lastChosenActionNeuron;
+    private boolean qValuePrint=true,
+                    rewardPrint=false;
     
+  
+  
     public Learner(double epsilon) {
         try {
             network = new NeuralNetwork(nnFileName);
@@ -47,12 +51,12 @@ public class Learner {
                     .setInputLayerActivationFunction(activationFunction)
                     .setHiddenLayersActivationFunction(activationFunction)
                     .setOutputLayerActivationFunction(activationFunction)
-                    .addInputLayer(22 * 22 + nButtons + 1)// Environment
-                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, 200)
-                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, 100)
+                    .addInputLayer((11 * 11 + nButtons + 1) * 4)// (11*11 Environment + lastAction + marioMode) *4 History
+                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, 160)
+                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, 80)
                     .addOutputLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, ids)
                     .setDropoutPercentage(0.5)
-                    .setEta(0.000002)
+                    .setEta(0.00000002)
                     .build();
             System.out.println("Creating new neural network");
         }
@@ -128,30 +132,40 @@ public class Learner {
     public boolean[] getAction(List<QState> environmentHistory) {
         double rand = Math.random();
         boolean[] chosenAction;
-        System.out.println("----------------------------");
+        if(qValuePrint)
+          System.out.println("----------------------------");
         //Exploration
         if (rand < epsilon) {
             chosenAction = getRandomAction(environmentHistory);
-            System.out.println("Exploration");
+            if(qValuePrint)
+              System.out.println("Exploration");
         }
         //Exploitation
         else {
             chosenAction = getBestAction(environmentHistory);
-            System.out.println("Exploitation");
+            if(qValuePrint)
+              System.out.println("Exploitation");
         }
 
         for (OutputNeuron n : lastNNOutput.getFinalOutputs().keySet()) {
-            printActionArray(parseActionString(n.getId()));
-            System.out.print("QValue = " + lastNNOutput.getValue(n));
+            if(qValuePrint)
+            {
+              printActionArray(parseActionString(n.getId()));
+              System.out.print("QValue = " + lastNNOutput.getValue(n));
+            }
             if (Arrays.equals(parseActionString(n.getId()), chosenAction)) {
                 lastChosenActionNeuron = n;
-                System.out.print("  <-------------Chosen Action");
-                System.out.print("");
+                if(qValuePrint)
+                {
+                  System.out.print("  <-------------Chosen Action");
+                  System.out.print("");
+                }
             }
-            System.out.println();
+            if(qValuePrint)
+              System.out.println();
         }
-
-        System.out.println("----------------------------");
+        if(qValuePrint)
+          System.out.println("----------------------------");
         return chosenAction;
     }
 
@@ -220,32 +234,55 @@ public class Learner {
         System.out.println();
     }
 
-    public void learn(List<QState> environmentHistory, double nextStateReward) {
+    public void learn(List<QState> environmentHistory, double nextStateReward)
+    {
+      if(rewardPrint)
+        System.out.println("Reward = "+ nextStateReward);
+      //qLearn(environmentHistory,nextStateReward);
+      sarsaLearn(environmentHistory,nextStateReward);
+    }
+
+    private void qLearn(List<QState> environmentHistory, double nextStateReward)
+    {
         //double qValueStAt = lastNNOutput.getValue(lastChosenActionNeuron);
         double qValueSt_nextAt_next;
-
+    
         Map<OutputNeuron, Double> targetOutputs = new HashMap<OutputNeuron, Double>(lastNNOutput.getFinalOutputs());
-
+    
         NNInput nextStateNNInput = new NNInput(environmentHistory);
         NeuralNetworkOutput nnOutput = network.forwardPropagation(nextStateNNInput);
         OutputNeuron nextStateMaxValueNeuron = nnOutput.getMaxValueNeuron();
         qValueSt_nextAt_next = nextStateReward + gamma * nnOutput.getValue(nextStateMaxValueNeuron);//Q-LEARNING
-
-        //SARSA, choosing next action using policy
-    /*double value;
-    double rand = Math.random();
-    if(rand<epsilon)
-      value = nnOutput.getRandomValue();
-    else
-      value = nnOutput.getValue(nextStateMaxValueNeuron);
-  
-    qValueSt_nextAt_next = nextStateReward + gamma * value;
-  */
+        
         targetOutputs.put(lastChosenActionNeuron, qValueSt_nextAt_next);
-
+    
         network.backPropagation(lastNNOutput, targetOutputs);
     }
-
+    
+    private void sarsaLearn(List<QState> environmentHistory, double nextStateReward)
+    {
+        //double qValueStAt = lastNNOutput.getValue(lastChosenActionNeuron);
+        double qValueSt_nextAt_next;
+    
+        Map<OutputNeuron, Double> targetOutputs = new HashMap<OutputNeuron, Double>(lastNNOutput.getFinalOutputs());
+    
+        NNInput nextStateNNInput = new NNInput(environmentHistory);
+        NeuralNetworkOutput nnOutput = network.forwardPropagation(nextStateNNInput);
+        OutputNeuron nextStateMaxValueNeuron = nnOutput.getMaxValueNeuron();
+    
+        //SARSA, choosing next action using policy
+       double value;
+       double rand = Math.random();
+       if(rand<epsilon)
+           value = nnOutput.getRandomValue();
+       else
+           value = nnOutput.getValue(nextStateMaxValueNeuron);
+  
+        qValueSt_nextAt_next = nextStateReward + gamma * value;
+        targetOutputs.put(lastChosenActionNeuron, qValueSt_nextAt_next);
+        network.backPropagation(lastNNOutput, targetOutputs);
+    }
+    
     public static void main(String argv[]) {
     }
 }

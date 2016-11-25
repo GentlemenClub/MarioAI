@@ -1,6 +1,7 @@
 package ch.idsia.ai.agents.human;
 
 import ch.idsia.ai.agents.Agent;
+import ch.idsia.mario.engine.LevelScene;
 import ch.idsia.mario.engine.sprites.Mario;
 import ch.idsia.mario.environments.Environment;
 
@@ -9,7 +10,7 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static competition.cig.desimonenotarangelo.scoreevaluatoragent.PatternHoleRecognition.*;
+import static competition.cig.desimonenotarangelo.scoreevaluatoragent.PatternHoleRecognition.getFormattedMatrix;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,7 +23,8 @@ public class HumanKeyboardAgent extends KeyAdapter implements Agent {
     List<boolean[]> history = new ArrayList<boolean[]>();
     private boolean[] Action = null;
     private String Name = "HumanKeyboardAgent";
-
+    private double lastScore=0;
+    
     public HumanKeyboardAgent() {
         this.reset();
 //        RegisterableAgent.registerAgent(this);
@@ -39,12 +41,78 @@ public class HumanKeyboardAgent extends KeyAdapter implements Agent {
 
         //System.out.println(arrayToString(formattedObservation));
     
-        MarioHoleStatus currentHoleStatus = getMarioHoleStatus(observation);
+        //MarioHoleStatus currentHoleStatus = getMarioHoleStatus(observation);
         //if(currentHoleStatus.equals(PatternHoleRecognition.MarioHoleStatus.AFTER))
-        System.out.println(currentHoleStatus.toString());
+        //System.out.println(currentHoleStatus.toString());
+        System.out.println(getReward(observation));
+        lastScore = getTotalScore(observation);
         return Action;
     }
-
+    
+    public double getLevelPosition(Environment observation)
+    {
+        return observation.getMarioFloatPos()[0];
+        //return normalizeValue(observation.getMarioFloatPos()[0]/16,
+        //                      0,320,
+        //                      0,1);
+    }
+    
+    public int getTimeLeft() {return LevelScene.timeLeft/15;}
+    
+    private double getRewardFromMarioStatus(int marioStatus)
+    {
+        switch(marioStatus)
+        {
+            case Mario.STATUS_DEAD :
+                //gameFinished = true;
+                if(getTimeLeft()>0)//Gives penalty only if mario is dead for a mistake and not for timeout
+                    return -600;
+                else
+                    return 0;
+                // case Mario.STATUS_WIN :
+                //gameFinished = true;
+                //    return 10000;
+            default :
+                return 0;
+        }
+    }
+    
+    public double getTotalScore(Environment observation)
+    {
+        return  (((int)getLevelPosition(observation))+
+                getRewardFromMarioStatus(observation.getMarioStatus())+
+                getMarioModeValue(observation.getMarioMode())+
+                observation.getKillsTotal()*80+
+                Mario.coins*50)*100;
+    }
+    
+    private double getMarioModeValue(int mode)
+    {
+        switch(mode)
+        {
+            case 0:
+                return 0;
+            case 1:
+                return 300;
+            case 2:
+                return 500;
+            default:
+                return 0;
+        }
+    }
+    
+    public void resetMarioValues()
+    {
+        lastScore = 0.0;
+    }
+    
+    private double getReward(Environment observation)
+    {
+        double reward = getTotalScore(observation) - lastScore;
+        return reward;
+    }
+    
+    
     private String arrayToString(String[] a) {
         int iMax = a.length - 1;
         if (iMax == -1)

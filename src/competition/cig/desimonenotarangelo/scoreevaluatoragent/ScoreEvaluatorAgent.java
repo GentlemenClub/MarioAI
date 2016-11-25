@@ -13,22 +13,19 @@ public class ScoreEvaluatorAgent implements Agent {
     
     private String name;
     private boolean[] action = new boolean[Learner.nButtons];
-    private double lastCoins = 0;
-    private int lastMarioMode = 2;
     private final int actionTurns=2;
     private int passedTurns=actionTurns;
-    private boolean scoreInitialized = false;
+    private boolean scoreInitialized;
     private Learner myLearner;
     private double lastScore;
     private int nJumpedHoles;
     private double lastHolePosX;
     private PatternHoleRecognition.MarioHoleStatus lastMarioHoleStatus;
-    //private boolean gameFinished;
     
     private LinkedList<QState> stateHistory;
     
-    private final int historySize = 1;
-    private final double epsilon = 0.8;
+    private final int historySize = 4;
+    private final double epsilon = 0.2;
     private final double holePosEpsilon = 200;
     
     public ScoreEvaluatorAgent()
@@ -46,7 +43,6 @@ public class ScoreEvaluatorAgent implements Agent {
       double[] doubleAction = new double[action.length];
       for(int i = 0; i < action.length ; i++ )
       {
-        //0.0 is avoided as much as possible in input to help learning
         if(action[i])
           doubleAction[i] = 1;
         else
@@ -55,6 +51,24 @@ public class ScoreEvaluatorAgent implements Agent {
       return doubleAction;
     }
   
+    private void initHistory(Environment observation)
+    {
+      double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
+              0, 2,
+              0, 1);
+      
+      if(stateHistory.isEmpty())
+      {
+        for(int i=0; i<historySize; i++)
+          stateHistory.addFirst(new QState(
+                  getNormalizedObservation(observation),
+                  getDoubleActionFromBoolean(new boolean[Learner.nButtons]),
+                  normalizedMarioMode));
+      }
+      else
+        throw new UnsupportedOperationException("History cannot be initialized twice.");
+    }
+    
     private void updateHistory(Environment observation)
     {
         double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
@@ -65,14 +79,11 @@ public class ScoreEvaluatorAgent implements Agent {
       
         if(stateHistory.size()==historySize)
         {
-          stateHistory.removeFirst();
-          stateHistory.addLast(new QState(getNormalizedObservation(observation),doubleAction,normalizedMarioMode));
+          stateHistory.removeLast();
+          stateHistory.addFirst(new QState(getNormalizedObservation(observation), doubleAction, normalizedMarioMode));
         }
-        else//First time only
-        {
-            for(int i=0; i<historySize; i++)
-              stateHistory.addLast(new QState(getNormalizedObservation(observation),doubleAction,normalizedMarioMode));
-        }
+        else
+          throw new UnsupportedOperationException("History needs to be initialized");
     }
     
     private double getMarioModeValue(int mode)
@@ -82,9 +93,9 @@ public class ScoreEvaluatorAgent implements Agent {
             case 0:
                 return 0;
             case 1:
-                return 400;
+                return 300;
             case 2:
-                return 800;
+                return 500;
             default:
                 return 0;
         }
@@ -98,17 +109,17 @@ public class ScoreEvaluatorAgent implements Agent {
         lastMarioHoleStatus = PatternHoleRecognition.MarioHoleStatus.BEFORE;
         stateHistory.clear();
         action = new boolean[Learner.nButtons];
-        //gameFinished = false;
+        scoreInitialized = false;
     }
     
     public double getTotalScore(Environment observation)
     {
-        return  getLevelPosition(observation)*10+
+        return  (((int)getLevelPosition(observation))+
                 getRewardFromMarioStatus(observation.getMarioStatus())+
                 getMarioModeValue(observation.getMarioMode())+
-                observation.getKillsTotal()*10+
-                Mario.coins*10+
-                nJumpedHoles*100;
+                observation.getKillsTotal()*100+
+                Mario.coins*50+
+                nJumpedHoles*100)*100;
     }
     
     private double getReward(Environment observation)
@@ -157,7 +168,7 @@ public class ScoreEvaluatorAgent implements Agent {
             case Mario.STATUS_DEAD :
                 //gameFinished = true;
                 if(getTimeLeft()>0)//Gives penalty only if mario is dead for a mistake and not for timeout
-                  return -1000;
+                  return -600;
                 else
                   return 0;
            // case Mario.STATUS_WIN :
@@ -183,16 +194,22 @@ public class ScoreEvaluatorAgent implements Agent {
   
     public static double[][] getNormalizedObservation(Environment Observation) {
         byte[][] completeObservation = Observation.getCompleteObservation();
-        double[][] subObservation = new double[22][22];
-      
-      for (int i = 0; i < 22; i++)
+        double[][] subObservation = new double[11][11];
+      int h=0,k=0;
+      for (int i = 5; i < 16; i++)
       {
-          for (int j = 0; j < 22; j++)
+          for (int j = 5; j < 16; j++)
           {
               //CompleteObservation[i][j] = 1;
-              subObservation[i][j] = normalizeValue(completeObservation[i][j],
+              subObservation[h][k] = normalizeValue(completeObservation[i][j],
                       Byte.MIN_VALUE, Byte.MAX_VALUE,
                       0, 1);
+            h++;
+            if(h==11)
+            {
+              h=0;
+              k++;
+            }
           }
       }
       return subObservation;
@@ -214,18 +231,20 @@ public class ScoreEvaluatorAgent implements Agent {
         //#   return new boolean[5];
         
         boolean isMarioDead = (observation.getMarioStatus()==Mario.STATUS_DEAD);
-        
+        boolean gameFinished = (observation.getMarioStatus()==Mario.STATUS_WIN);
+                
         if(!scoreInitialized)//First time only
         {
-            updateHistory(observation);
+            initHistory(observation);
             action = myLearner.getAction(stateHistory);
+            updateHistory(observation);
             passedTurns++;
             lastScore = getTotalScore(observation);
             scoreInitialized = true;
         }
         else if(passedTurns<actionTurns && !isMarioDead)//Same action must be done other times
             passedTurns++;
-        else//New action need to be decided
+        else if(!gameFinished) //New action need to be decided
         {
             MarioHoleStatus currentHoleStatus = getMarioHoleStatus(observation);
             if(!lastMarioHoleStatus.equals(MarioHoleStatus.AFTER) && currentHoleStatus.equals(MarioHoleStatus.AFTER) &&
@@ -237,12 +256,20 @@ public class ScoreEvaluatorAgent implements Agent {
             
             lastMarioHoleStatus = currentHoleStatus;
             passedTurns = 0;
+            //First, reward is given based on current world state
             double reward = getReward(observation);
-            updateHistory(observation);
+            //Then backpropagate properly this reward on my history
             myLearner.learn(stateHistory,reward);
+            //Now new action is elaborated by the learner
             action = myLearner.getAction(stateHistory);
+            //History is updated with new decisions
+            updateHistory(observation);
+            //Score is updated for next delta-reward calculation
             lastScore = getTotalScore(observation);
         }
+        else
+          System.out.println("Game Finished! ^.^");
+        
         return action;
     }
     

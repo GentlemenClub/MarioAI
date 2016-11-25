@@ -8,6 +8,8 @@ import ch.idsia.tools.CmdLineOptions;
 import ch.idsia.tools.EvaluationOptions;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.ScoreEvaluatorAgent;
 
+import java.util.Random;
+
 /**
  * Created by IntelliJ IDEA.
  * User: julian
@@ -19,7 +21,7 @@ public class Play {
     public static void main(String[] args) {
         Agent controller = new ScoreEvaluatorAgent();
         //Agent controller = new HumanKeyboardAgent();
-
+        Random rand = new Random();
         for (int i = 0; i < 100000000; i++) {
             if (args.length > 0) {
                 controller = AgentsPool.load(args[0]);
@@ -28,14 +30,15 @@ public class Play {
             EvaluationOptions options = new CmdLineOptions(new String[0]);
             options.setAgent(controller);
             Task task = new ProgressTask(options);
-            options.setMaxFPS(false);
+            options.setMaxFPS(true);
             options.setVisualization(true);
             options.setNumberOfTrials(1);
             options.setMatlabFileName("");
             options.setLevelRandSeed((int) (Math.random() * Integer.MAX_VALUE));
-            options.setLevelDifficulty(0);
+            options.setLevelDifficulty(0);//(rand.nextInt(3));
             task.setOptions(options);
             System.out.println("Score: " + task.evaluate(controller)[0]);
+            
             ((ScoreEvaluatorAgent) controller).saveAI();
             ((ScoreEvaluatorAgent) controller).resetMarioValues();
         }

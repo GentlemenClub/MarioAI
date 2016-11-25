@@ -6,20 +6,17 @@ public class QState
   private final double[] lastAction;
   private final double marioMode;
   
-  public QState(double[][] observation, double[] lastAction, double marioState)
+  public QState(double[][] observation, double[] lastAction, double marioMode)
   {
     this.observation = observation;
     this.lastAction = lastAction;
-    this.marioMode = marioState;
+    this.marioMode = marioMode;
   }
   
   public double[][] getObservation()
   {
     return observation;
   }
-  public double getMarioMode()
-  {
-    return marioMode;
-  }
+  public double getMarioMode() { return marioMode; }
   public double[] getLastAction() { return lastAction; }
 }
