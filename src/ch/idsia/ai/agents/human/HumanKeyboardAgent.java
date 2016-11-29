@@ -79,11 +79,11 @@ public class HumanKeyboardAgent extends KeyAdapter implements Agent {
     
     public double getTotalScore(Environment observation)
     {
-        return  (((int)getLevelPosition(observation))+
+        return  ((int)getLevelPosition(observation))+
                 getRewardFromMarioStatus(observation.getMarioStatus())+
                 getMarioModeValue(observation.getMarioMode())+
-                observation.getKillsTotal()*80+
-                Mario.coins*50)*100;
+                observation.getKillsTotal()*100+
+                Mario.coins*10;
     }
     
     private double getMarioModeValue(int mode)
@@ -93,9 +93,9 @@ public class HumanKeyboardAgent extends KeyAdapter implements Agent {
             case 0:
                 return 0;
             case 1:
-                return 300;
+                return 400;
             case 2:
-                return 500;
+                return 600;
             default:
                 return 0;
         }
