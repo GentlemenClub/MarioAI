@@ -30,12 +30,14 @@ public class Play {
             EvaluationOptions options = new CmdLineOptions(new String[0]);
             options.setAgent(controller);
             Task task = new ProgressTask(options);
-            options.setMaxFPS(false);
+            options.setMaxFPS(true);
             options.setVisualization(true);
             options.setNumberOfTrials(1);
             options.setMatlabFileName("");
             options.setLevelRandSeed((int) (Math.random() * Integer.MAX_VALUE));
-            options.setLevelDifficulty(0);//(rand.nextInt(3));
+//            options.setLevelRandSeed(1859719211);
+
+            options.setLevelDifficulty(2);//(rand.nextInt(3));
             task.setOptions(options);
             System.out.println("Score: " + task.evaluate(controller)[0]);
             

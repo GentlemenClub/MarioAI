@@ -5,6 +5,7 @@ import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.*;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ActivationFunction;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.BentIdentity;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.SigmoidFunction;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.activationfunctions.ReLU;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.neuralnetwork.valuegenerators.ValueGenerator;
 
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class Learner {
     private boolean qValuePrint=true,
                     rewardPrint=false;
     
-    private LinkedList<QState> inputHistory;
+    private LinkedList<double[]> inputHistory;
     private final int historySize = 4;
     
     public Learner(double epsilon) {
@@ -31,6 +32,7 @@ public class Learner {
         } catch (IOException | ClassNotFoundException e) {
             ActivationFunction bentIdentity = new BentIdentity();
             ActivationFunction sigmoidFunction = new SigmoidFunction();
+            ActivationFunction reLU = new ReLU();
 
 
             ActionIterator iterator = new ActionIterator();
@@ -50,21 +52,21 @@ public class Learner {
             }
 
             network = new NeuralNetworkBuilder()
-                    .setInputLayerActivationFunction(sigmoidFunction)
+                    .setInputLayerActivationFunction(reLU)
                     .setHiddenLayersActivationFunction(bentIdentity)
                     .setOutputLayerActivationFunction(bentIdentity)
-                    .addInputLayer((11 * 11 + nButtons + 1) * 4// (11*11 Environment + Action + marioMode)*4 History
-                                + (22*22+1))//22*22 Current Environment =+ Current Mario Mode
-                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, 300)
-                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, 150)
-                    .addOutputLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.RANDOM, ids)
+                    .addInputLayer(nButtons * historySize//  Action History
+                                + (22*22+1))//22*22 Current Environment + Current Mario Mode
+                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, 250)
+                    .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, 125)
+                    .addOutputLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, ids)
                     .setDropoutPercentage(0.5)
-                    .setEta(0.000002)
+                    .setEta(0.00002)
                     .build();
             System.out.println("Creating new neural network");
         }
         this.epsilon = epsilon;
-        this.inputHistory = new LinkedList<QState>();
+        this.inputHistory = new LinkedList<double[]>();
     }
 
     public void saveStatus() {
@@ -104,24 +106,14 @@ public class Learner {
     private class NNInput implements NeuralNetworkInput {
         List<Double> inputAsList;
 
-        NNInput(List<QState> environmentHistory, Environment observation) {
+        NNInput(List<double[]> environmentHistory, Environment observation) {
             //inputAsList contains all neural network inputs mapped into a single list
             inputAsList = new ArrayList<Double>();
 
-            for (QState s : environmentHistory) {
-                //Environment in a time in history
-                double[][] currObservation = s.getObservation();
-                for (int i = 0; i < currObservation.length; i++)
-                    for (int j = 0; j < currObservation.length; j++)
-                        inputAsList.add(currObservation[i][j]);
-                
+            for (double[] action : environmentHistory) {
                 //Action took at that time
-                double[] lastAction = s.getLastAction();
-                for (int i = 0; i < lastAction.length; i++)
-                    inputAsList.add(lastAction[i]);
-    
-                //Mario mode at that time
-                inputAsList.add(s.getMarioMode());
+                for (int i = 0; i < action.length; i++)
+                    inputAsList.add(action[i]);
             }
             
             //Full observation in current Environment
@@ -208,36 +200,25 @@ public class Learner {
         return doubleAction;
     }
     
-    private void initHistory(Environment observation)
+    private void initHistory()
     {
-        double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
-                0.0, 2.0,
-                0.0, 1.0);
-        
         if(inputHistory.isEmpty())
         {
             for(int i=0; i<historySize; i++)
-                inputHistory.addFirst(new QState(
-                        getNormalizedSubObservation(observation),
-                        getDoubleActionFromBoolean(new boolean[Learner.nButtons]),
-                        normalizedMarioMode));
+                inputHistory.addFirst(getDoubleActionFromBoolean(new boolean[Learner.nButtons]));
         }
         else
             throw new UnsupportedOperationException("History cannot be initialized twice.");
     }
     
-    private void updateHistory(Environment observation, boolean[] action)
+    private void updateHistory(boolean[] action)
     {
-        double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
-                0, 2,
-                0, 1);
-        
         double[] doubleAction = getDoubleActionFromBoolean(action);
         
         if(inputHistory.size()==historySize)
         {
             inputHistory.removeLast();
-            inputHistory.addFirst(new QState(getNormalizedSubObservation(observation), doubleAction, normalizedMarioMode));
+            inputHistory.addFirst(doubleAction);
         }
         else
             throw new UnsupportedOperationException("History needs to be initialized");
@@ -252,7 +233,7 @@ public class Learner {
         
         //First time initialization only
         if(inputHistory.isEmpty())
-          initHistory(observation);
+          initHistory();
         
         if(qValuePrint)
           System.out.println("----------------------------");
@@ -290,7 +271,7 @@ public class Learner {
           System.out.println("----------------------------");
         
         //Records in history the fact that agent took this action in this environment
-        updateHistory(observation, chosenAction);
+        updateHistory(chosenAction);
         
         return chosenAction;
     }
@@ -302,7 +283,7 @@ public class Learner {
         for (int i = 0; i < nButtons; i++)
             randomAction[i] = random.nextBoolean();
 
-        NNInput nnInput = new NNInput(inputHistory,observation);
+        NNInput nnInput = new NNInput(inputHistory, observation);
         lastNNOutput = network.forwardPropagation(nnInput);
         
         return randomAction;
@@ -362,7 +343,7 @@ public class Learner {
       sarsaLearn(observation,nextStateReward);
     }
 
-    /*private void qLearn(Environment observation, double nextStateReward)
+    private void qLearn(Environment observation, double nextStateReward)
     {
         //double qValueStAt = lastNNOutput.getValue(lastChosenActionNeuron);
         double qValueSt_nextAt_next;
@@ -376,7 +357,7 @@ public class Learner {
         targetOutputs.put(lastChosenActionNeuron, qValueSt_nextAt_next);
     
         network.backPropagation(lastNNOutput, targetOutputs);
-    }*/
+    }
     
     private void sarsaLearn(Environment observation, double nextStateReward)
     {
