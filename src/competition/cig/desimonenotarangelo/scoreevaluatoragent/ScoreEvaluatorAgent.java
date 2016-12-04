@@ -48,9 +48,9 @@ public class ScoreEvaluatorAgent implements Agent {
             case 0:
                 return 0;
             case 1:
-                return 80;
+                return 200;
             case 2:
-                return 120;
+                return 300;
             default:
                 return 0;
         }
@@ -69,7 +69,7 @@ public class ScoreEvaluatorAgent implements Agent {
         return  ((int)getLevelPosition(observation))+
                 getRewardFromMarioStatus(observation.getMarioStatus())+
                 getMarioModeValue(observation.getMarioMode())+
-                observation.getKillsTotal()*10+
+                observation.getKillsTotal()*100+
                 Mario.coins;
     }
     
@@ -81,7 +81,7 @@ public class ScoreEvaluatorAgent implements Agent {
         {
             case Mario.STATUS_DEAD :
                 if(getTimeLeft()>0)//Gives penalty only if mario is dead for a mistake and not for timeout
-                  return -120;
+                  return -300;
             default :
                 return 0;
         }
@@ -111,9 +111,9 @@ public class ScoreEvaluatorAgent implements Agent {
         if(!scoreInitialized)//First time only
         {
             action = myLearner.getAction(observation);
-            //passedTurns++;
             lastScore = getTotalScore(observation);
             scoreInitialized = true;
+            passedTurns++;
         }
         else if(passedTurns<actionTurns && !isMarioDead)//Same action must be done other times
             passedTurns++;
@@ -124,7 +124,7 @@ public class ScoreEvaluatorAgent implements Agent {
             double reward = getReward(observation);
             //Then backpropagate properly this reward on my history
             myLearner.learn(observation,reward);
-            
+
             action = myLearner.getAction(observation);
             lastScore = getTotalScore(observation);
         }

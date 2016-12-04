@@ -23,8 +23,8 @@ public class Learner {
     private boolean qValuePrint=true,
                     rewardPrint=false;
     
-    private LinkedList<double[]> inputHistory;
-    private final int historySize = 4;
+    private LinkedList<QState> stateHistory;
+    private final int historySize = 3;
     
     public Learner(double epsilon) {
         try {
@@ -55,8 +55,8 @@ public class Learner {
                     .setInputLayerActivationFunction(reLU)
                     .setHiddenLayersActivationFunction(bentIdentity)
                     .setOutputLayerActivationFunction(bentIdentity)
-                    .addInputLayer(nButtons * historySize//  Action History
-                                + (22*22+1))//22*22 Current Environment + Current Mario Mode
+                    .addInputLayer((11*11 + 1 + nButtons) * historySize//  (11*11 stateT + 1MarioModeT + 5ActionT) * 3 historySize
+                                + (11*11+1))//11*11 Current Environment + 1 Current Mario Mode
                     .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, 250)
                     .addHiddenLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, 125)
                     .addOutputLayer(ValueGenerator.Type.XAVIER, ValueGenerator.Type.XAVIER, ids)
@@ -66,7 +66,7 @@ public class Learner {
             System.out.println("Creating new neural network");
         }
         this.epsilon = epsilon;
-        this.inputHistory = new LinkedList<double[]>();
+        this.stateHistory = new LinkedList<QState>();
     }
 
     public void saveStatus() {
@@ -106,18 +106,28 @@ public class Learner {
     private class NNInput implements NeuralNetworkInput {
         List<Double> inputAsList;
 
-        NNInput(List<double[]> environmentHistory, Environment observation) {
+        NNInput(List<QState> environmentHistory, Environment observation) {
             //inputAsList contains all neural network inputs mapped into a single list
             inputAsList = new ArrayList<Double>();
 
-            for (double[] action : environmentHistory) {
-                //Action took at that time
-                for (int i = 0; i < action.length; i++)
-                    inputAsList.add(action[i]);
+            for (QState s: environmentHistory)
+            {
+
+                //Submatrix of the environment at time t
+                for (int i = 0; i < s.getObservation().length; i++)
+                    for (int j = 0; j < s.getObservation().length; j++)
+                        inputAsList.add(s.getObservation()[i][j]);
+
+                //Mario mode at time t
+                inputAsList.add(s.getMarioMode());
+
+                //Action took at time t
+                for (int i = 0; i < s.getAction().length; i++)
+                    inputAsList.add(s.getAction()[i]);
             }
             
-            //Full observation in current Environment
-            double [][] normalizedObservation = getNormalizedObservation(observation);
+            //Submatrix of current environment
+            double [][] normalizedObservation = getNormalizedSubObservation(observation);
             for (int i = 0; i < normalizedObservation.length; i++)
                 for (int j = 0; j < normalizedObservation.length; j++)
                     inputAsList.add(normalizedObservation[i][j]);
@@ -148,10 +158,10 @@ public class Learner {
     }
     
     public static double[][] getNormalizedObservation(Environment Observation) {
-        
+
         byte[][] completeObservationInByte = Observation.getCompleteObservation();
         double[][] completeObservationInDouble = new double[22][22];
-        
+
         for (int i = 0; i < 22; i++)
         {
             for (int j = 0; j < 22; j++)
@@ -200,31 +210,43 @@ public class Learner {
         return doubleAction;
     }
     
-    private void initHistory()
+    private void initHistory(Environment observation)
     {
-        if(inputHistory.isEmpty())
+
+        double[][] subObservation = getNormalizedSubObservation(observation);
+        double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
+                0.0, 2.0,
+                0.0, 1.0);
+        double[] doubleAction = getDoubleActionFromBoolean(new boolean [Learner.nButtons]);
+
+        if(stateHistory.isEmpty())
         {
             for(int i=0; i<historySize; i++)
-                inputHistory.addFirst(getDoubleActionFromBoolean(new boolean[Learner.nButtons]));
+                stateHistory.addFirst(new QState(subObservation, normalizedMarioMode, doubleAction));
         }
         else
             throw new UnsupportedOperationException("History cannot be initialized twice.");
     }
     
-    private void updateHistory(boolean[] action)
+    private void updateHistory(Environment observation, boolean[] action)
     {
+
+        double[][] subObservation = getNormalizedSubObservation(observation);
+        double normalizedMarioMode = normalizeValue(observation.getMarioStatus(),
+                0.0, 2.0,
+                0.0, 1.0);
         double[] doubleAction = getDoubleActionFromBoolean(action);
         
-        if(inputHistory.size()==historySize)
+        if(stateHistory.size()==historySize)
         {
-            inputHistory.removeLast();
-            inputHistory.addFirst(doubleAction);
+            stateHistory.removeLast();
+            stateHistory.addFirst(new QState(subObservation, normalizedMarioMode, doubleAction));
         }
         else
             throw new UnsupportedOperationException("History needs to be initialized");
     }
     
-    public void reset() { inputHistory.clear(); }
+    public void reset() { stateHistory.clear(); }
     
     public boolean[] getAction(Environment observation)
     {
@@ -232,9 +254,9 @@ public class Learner {
         boolean[] chosenAction;
         
         //First time initialization only
-        if(inputHistory.isEmpty())
-          initHistory();
-        
+        if(stateHistory.isEmpty())
+          initHistory(observation);
+
         if(qValuePrint)
           System.out.println("----------------------------");
         //Exploration
@@ -271,7 +293,7 @@ public class Learner {
           System.out.println("----------------------------");
         
         //Records in history the fact that agent took this action in this environment
-        updateHistory(chosenAction);
+        updateHistory(observation,chosenAction);
         
         return chosenAction;
     }
@@ -283,7 +305,7 @@ public class Learner {
         for (int i = 0; i < nButtons; i++)
             randomAction[i] = random.nextBoolean();
 
-        NNInput nnInput = new NNInput(inputHistory, observation);
+        NNInput nnInput = new NNInput(stateHistory, observation);
         lastNNOutput = network.forwardPropagation(nnInput);
         
         return randomAction;
@@ -300,7 +322,7 @@ public class Learner {
     public boolean[] getBestAction(Environment observation) {
         boolean[] chosenAction = null;
 
-        NNInput nnInput = new NNInput(inputHistory,observation);
+        NNInput nnInput = new NNInput(stateHistory,observation);
         NeuralNetworkOutput nnOutput = network.forwardPropagation(nnInput);
         OutputNeuron maxQValueNeuron = nnOutput.getMaxValueNeuron();
         
@@ -349,7 +371,7 @@ public class Learner {
         double qValueSt_nextAt_next;
     
         Map<OutputNeuron, Double> targetOutputs = new HashMap<OutputNeuron, Double>(lastNNOutput.getFinalOutputs());
-        NNInput nextStateNNInput = new NNInput(inputHistory,observation);
+        NNInput nextStateNNInput = new NNInput(stateHistory,observation);
         NeuralNetworkOutput nnOutput = network.forwardPropagation(nextStateNNInput);
         OutputNeuron nextStateMaxValueNeuron = nnOutput.getMaxValueNeuron();
         qValueSt_nextAt_next = nextStateReward + gamma * nnOutput.getValue(nextStateMaxValueNeuron);//Q-LEARNING
@@ -365,7 +387,7 @@ public class Learner {
     
         Map<OutputNeuron, Double> targetOutputs = new HashMap<OutputNeuron, Double>(lastNNOutput.getFinalOutputs());
     
-        NNInput nextStateNNInput = new NNInput(inputHistory,observation);
+        NNInput nextStateNNInput = new NNInput(stateHistory,observation);
         NeuralNetworkOutput nnOutput = network.forwardPropagation(nextStateNNInput);
         
         //SARSA, choosing next action using policy

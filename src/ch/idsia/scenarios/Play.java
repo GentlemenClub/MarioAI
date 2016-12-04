@@ -37,7 +37,7 @@ public class Play {
             options.setLevelRandSeed((int) (Math.random() * Integer.MAX_VALUE));
 //            options.setLevelRandSeed(1859719211);
 
-            options.setLevelDifficulty(2);//(rand.nextInt(3));
+            options.setLevelDifficulty(1);//(rand.nextInt(3));
             task.setOptions(options);
             System.out.println("Score: " + task.evaluate(controller)[0]);
             
