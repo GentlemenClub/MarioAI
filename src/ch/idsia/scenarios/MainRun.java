@@ -13,7 +13,7 @@ import ch.idsia.utils.StatisticalSummary;
 
 import java.util.List;
 
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.ScoreEvaluatorAgent;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.MarIA;
 
 /**
  * Created by IntelliJ IDEA.
@@ -72,7 +72,7 @@ public class MainRun {
             // AgentsPool.addAgent(new AStarAgent());
 //            AgentsPool.addAgent(new RjAgent());
             //AgentsPool.addAgent(new SergeyKarakovskiy_JumpingAgent());
-            AgentsPool.addAgent(new ScoreEvaluatorAgent());
+            AgentsPool.addAgent(new MarIA());
         }
     }
 
@@ -154,7 +154,7 @@ public class MainRun {
 //            System.out.println("result.computeKillsTotal() = " + result.computeKillsTotal());
             ss.add(result.computeDistancePassed());
             //this cast is needed because we can't implement saveAI() in the super class Agent
-            ((ScoreEvaluatorAgent) controller.getWrappedAgent()).saveAI();
+            ((MarIA) controller.getWrappedAgent()).saveAI();
         }
 
         System.out.println("\n===================\nStatistics over " + numberOfTrials + " runs for " + controller.getName());

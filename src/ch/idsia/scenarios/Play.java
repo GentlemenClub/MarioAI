@@ -6,7 +6,7 @@ import ch.idsia.ai.tasks.ProgressTask;
 import ch.idsia.ai.tasks.Task;
 import ch.idsia.tools.CmdLineOptions;
 import ch.idsia.tools.EvaluationOptions;
-import competition.cig.desimonenotarangelo.scoreevaluatoragent.ScoreEvaluatorAgent;
+import competition.cig.desimonenotarangelo.scoreevaluatoragent.MarIA;
 
 import java.util.Random;
 
@@ -19,7 +19,7 @@ import java.util.Random;
 public class Play {
 
     public static void main(String[] args) {
-        Agent controller = new ScoreEvaluatorAgent();
+        Agent controller = new MarIA();
         //Agent controller = new HumanKeyboardAgent();
         Random rand = new Random();
         for (int i = 0; i < 100000000; i++) {
@@ -35,14 +35,13 @@ public class Play {
             options.setNumberOfTrials(1);
             options.setMatlabFileName("");
             options.setLevelRandSeed((int) (Math.random() * Integer.MAX_VALUE));
-//            options.setLevelRandSeed(1859719211);
-
+            //options.setLevelRandSeed(1859719211);
             options.setLevelDifficulty(1);//(rand.nextInt(3));
             task.setOptions(options);
             System.out.println("Score: " + task.evaluate(controller)[0]);
-            
-            ((ScoreEvaluatorAgent) controller).saveAI();
-            ((ScoreEvaluatorAgent) controller).resetMarioValues();
+
+            ((MarIA) controller).saveAI();
+            controller.reset();
         }
     }
 }
