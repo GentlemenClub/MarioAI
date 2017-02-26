@@ -72,7 +72,7 @@ public class MainRun {
             // AgentsPool.addAgent(new AStarAgent());
 //            AgentsPool.addAgent(new RjAgent());
             //AgentsPool.addAgent(new SergeyKarakovskiy_JumpingAgent());
-            AgentsPool.addAgent(new MarIA());
+            //AgentsPool.addAgent(new MarIA());
         }
     }
 
@@ -154,7 +154,7 @@ public class MainRun {
 //            System.out.println("result.computeKillsTotal() = " + result.computeKillsTotal());
             ss.add(result.computeDistancePassed());
             //this cast is needed because we can't implement saveAI() in the super class Agent
-            ((MarIA) controller.getWrappedAgent()).saveAI();
+            //((MarIA) controller.getWrappedAgent()).saveAI();
         }
 
         System.out.println("\n===================\nStatistics over " + numberOfTrials + " runs for " + controller.getName());

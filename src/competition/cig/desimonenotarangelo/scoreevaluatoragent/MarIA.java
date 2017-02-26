@@ -12,18 +12,28 @@ public class MarIA implements Agent {
     private int passedTurns = actionTurns;
     private boolean scoreInitialized;
     private Learner myLearner;
+
     private double lastScore;
+    private boolean wins;
 
     private final double epsilon = 0.2;
 
-    public MarIA() {
+    public MarIA(String fileName) {
         this.name = getClass().getName();
-        myLearner = new Learner(epsilon);
+        myLearner = new Learner(epsilon, fileName);
         reset();
     }
 
-    public void saveAI() {
-        myLearner.saveStatus();
+    public double getLastScore() {
+        return lastScore;
+    }
+
+    public boolean hasWon() {
+        return wins;
+    }
+
+    public void saveAI(String fileName) {
+        myLearner.saveStatus(fileName);
     }
 
     private double getMarioModeValue(int mode) {
@@ -66,6 +76,7 @@ public class MarIA implements Agent {
         action = new boolean[Learner.nButtons];
         scoreInitialized = false;
         myLearner.reset();
+        wins = false;
     }
 
     public int getTimeLeft() {
@@ -73,7 +84,9 @@ public class MarIA implements Agent {
     }
 
     public double getLevelPosition(Environment observation) {
-        return observation.getMarioFloatPos()[0];
+        double position = observation.getMarioFloatPos()[0];
+        //System.out.println("Position: " + position);
+        return position;
     }
 
     public boolean[] getAction(Environment observation) {
@@ -98,8 +111,10 @@ public class MarIA implements Agent {
 
             action = myLearner.getAction(observation);
             lastScore = getTotalScore(observation);
-        } else
+        } else {
+            wins = true;
             System.out.println("Game Finished! ^.^");
+        }
 
         return action;
     }

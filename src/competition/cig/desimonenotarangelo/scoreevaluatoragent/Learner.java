@@ -16,7 +16,6 @@ public class Learner {
     private double epsilon;
     private NeuralNetworkOutput lastNNOutput = null;
     private double gamma = 0.9;
-    private String nnFileName = "MarioAI.ai";
     public final static int nActions = 32;
     public final static int nButtons = 5;
     private OutputNeuron lastChosenActionNeuron;
@@ -26,9 +25,9 @@ public class Learner {
     private LinkedList<QState> stateHistory;
     private final int historySize = 3;
 
-    public Learner(double epsilon) {
+    public Learner(double epsilon, String fileName) {
         try {
-            network = new NeuralNetwork(nnFileName);
+            network = new NeuralNetwork(fileName);
         } catch (IOException | ClassNotFoundException e) {
             ActivationFunction bentIdentity = new BentIdentity();
             ActivationFunction sigmoidFunction = new SigmoidFunction();
@@ -70,8 +69,8 @@ public class Learner {
         this.stateHistory = new LinkedList<QState>();
     }
 
-    public void saveStatus() {
-        network.saveNeuralNetwork(nnFileName);
+    public void saveStatus(String fileName) {
+        network.saveNeuralNetwork(fileName);
     }
 
     //iterates every possible action with 2^5 possible combinations
@@ -342,8 +341,8 @@ public class Learner {
     public void learn(Environment observation, double nextStateReward) {
         if (rewardPrint)
             System.out.println("Reward = " + nextStateReward);
-        qLearn(observation,nextStateReward);
-        //sarsaLearn(observation, nextStateReward);
+        //qLearn(observation,nextStateReward);
+        sarsaLearn(observation, nextStateReward);
     }
 
     private void qLearn(Environment observation, double nextStateReward) {
@@ -365,7 +364,6 @@ public class Learner {
         double qValueSt_nextAt_next;
 
         Map<OutputNeuron, Double> targetOutputs = new HashMap<OutputNeuron, Double>(lastNNOutput.getFinalOutputs());
-
         NNInput nextStateNNInput = new NNInput(stateHistory, observation);
         NeuralNetworkOutput nnOutput = network.forwardPropagation(nextStateNNInput);
 
