@@ -8,12 +8,14 @@ import ch.idsia.tools.CmdLineOptions;
 import ch.idsia.tools.EvaluationOptions;
 import competition.cig.desimonenotarangelo.scoreevaluatoragent.MarIA;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,14 +26,23 @@ import java.util.Random;
 public class Play {
 
     public static void main(String[] args) throws IOException{
-        Agent controller = new MarIA("");
+        Agent controller = new MarIA("Mario.ai");
         //Agent controller = new HumanKeyboardAgent();
         Random rand = new Random();
         int epochs = 1000;
         String cvsFileName = "results.csv";
-        FileWriter csvWriter = new FileWriter(cvsFileName);
+        String indexFileName = "index.txt";
 
-        for (int i = 0; i < epochs; i++) {
+        File indexFile = new File(indexFileName);
+        Scanner s = new Scanner(indexFile);
+
+        int index = 0;
+        if (s.hasNextInt())
+            index = s.nextInt();
+
+        while (index < epochs) {
+            FileWriter csvWriter = new FileWriter(cvsFileName, true);
+
             if (args.length > 0) {
                 controller = AgentsPool.load(args[0]);
                 AgentsPool.addAgent(controller);
@@ -50,43 +61,41 @@ public class Play {
 
             Double lastScore = ((MarIA) controller).getLastScore();
             Boolean hasWon = ((MarIA) controller).hasWon();
-            writeLine(csvWriter, Arrays.asList(lastScore.toString(), hasWon.toString()), ',', ' ');
+            writeLine(csvWriter, Arrays.asList(lastScore.toString(), hasWon.toString()));
 
-            if (i == 9) {
+            if (index == 9) {
                 ((MarIA) controller).saveAI("epoch10.ai");
-            }else if (i == 99) {
+            }else if (index == 99) {
                 ((MarIA) controller).saveAI("epoch100.ai");
-            } else if (i == 999) {
+            } else if (index == 999) {
                 ((MarIA) controller).saveAI("epoch1000.ai");
             }
 
+            ((MarIA) controller).saveAI("Mario.ai");
             controller.reset();
-        }
 
-        csvWriter.flush();
-        csvWriter.close();
+            csvWriter.flush();
+            csvWriter.close();
+
+            index++;
+            FileWriter indexWriter = new FileWriter(indexFileName);
+            indexWriter.append(Integer.toString(index));
+            indexWriter.flush();
+            indexWriter.close();
+        }
     }
 
-    public static void writeLine(Writer w, List<String> values, char separators, char customQuote) throws IOException {
-
+    private static void writeLine(Writer w, List<String> values) throws IOException {
+        char separators = ',';
+        char customQuote = ' ';
         boolean first = true;
-
-        //default customQuote is empty
-
-        if (separators == ' ') {
-            separators = ',';
-        }
 
         StringBuilder sb = new StringBuilder();
         for (String value : values) {
             if (!first) {
                 sb.append(separators);
             }
-            if (customQuote == ' ') {
-                sb.append(followCVSformat(value));
-            } else {
-                sb.append(customQuote).append(followCVSformat(value)).append(customQuote);
-            }
+            sb.append(followCVSformat(value));
 
             first = false;
         }
